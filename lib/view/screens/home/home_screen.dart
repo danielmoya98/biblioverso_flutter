@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodel/home_viewmodel.dart';
+import '../profile/profile_screen.dart';
 import '../reservations/reservations_screen.dart';
 // import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatelessWidget {
       const HomeContent(),
       const SearchScreen(),
       const ReservationsScreen(),
-      // const ProfileScreen(),
+      const ProfileScreen(),
     ];
 
     return Scaffold(

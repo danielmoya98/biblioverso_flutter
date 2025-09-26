@@ -1,10 +1,12 @@
 import 'package:biblioverso_flutter/view/screens/favorites/favorites_screen.dart';
 import 'package:biblioverso_flutter/view/screens/home/home_screen.dart';
 import 'package:biblioverso_flutter/view/screens/onboarding/onboarding_screen.dart';
+import 'package:biblioverso_flutter/view/screens/profile/profile_screen.dart';
 import 'package:biblioverso_flutter/view/screens/search/search_screen.dart';
 import 'package:biblioverso_flutter/view/screens/reservations/reservations_screen.dart';
 import 'package:biblioverso_flutter/viewmodel/favorites_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/home_viewmodel.dart';
+import 'package:biblioverso_flutter/viewmodel/profile_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/search_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/reservations_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -36,6 +38,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SearchViewModel()),
         ChangeNotifierProvider(create: (_) => ReservationsViewModel()),
         ChangeNotifierProvider(create: (_) => FavoritesViewModel()),
+        ChangeNotifierProvider(create: (_) => ProfileViewModel()),
+
 
       ],
       child: MaterialApp(
@@ -55,8 +59,7 @@ class MyApp extends StatelessWidget {
           "/search": (context) => const SearchScreen(),
           "/reservations": (context) => const ReservationsScreen(),
           "/favorites": (context) => const FavoritesScreen(),
-
-// ✅ agregado
+          "/profile": (context) => const ProfileScreen(),
         },
       ),
     );
