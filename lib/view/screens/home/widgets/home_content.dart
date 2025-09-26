@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../../../viewmodel/home_viewmodel.dart';
+import '../../category/category_screen.dart';
 import '../../search/search_screen.dart';
 
 class HomeContent extends StatelessWidget {
@@ -9,6 +9,34 @@ class HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Mock de categorías con libros
+    final Map<String, List<Map<String, dynamic>>> booksByCategory = {
+      "Literatura": [
+        {
+          "title": "Cien años de soledad",
+          "author": "Gabriel García Márquez",
+          "price": "€18.99",
+          "rating": 4.8,
+          "status": "Disponible",
+          "image": "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
+        }
+      ],
+      "Ciencia Ficción": [
+        {
+          "title": "Dune",
+          "author": "Frank Herbert",
+          "price": "€24.9",
+          "rating": 4.7,
+          "status": "Disponible",
+          "image": "https://m.media-amazon.com/images/I/91A2W98J+RL.jpg",
+        }
+      ],
+      "Historia": [],
+      "Infantil": [],
+      "Filosofía": [],
+      "Romance": [],
+    };
+
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,7 +66,7 @@ class HomeContent extends StatelessWidget {
             ),
           ),
 
-          // Barra de búsqueda fija con Hero
+          // ✅ Barra de búsqueda fija con Hero
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GestureDetector(
@@ -78,24 +106,36 @@ class HomeContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Categorías
+                  // 🔹 Categorías con navegación
                   SizedBox(
                     height: 120,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      children: const [
-                        _CategoryCard("Literatura", "245", Icons.menu_book),
-                        _CategoryCard("Ciencia Ficción", "156", Icons.science),
-                        _CategoryCard("Historia", "189", Icons.history_edu),
-                        _CategoryCard("Infantil", "298", Icons.child_care),
-                        _CategoryCard("Filosofía", "134", Icons.psychology),
-                        _CategoryCard("Romance", "267", Icons.favorite),
-                      ],
+                      children: booksByCategory.keys.map((category) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => CategoryScreen(
+                                  categoryName: category,
+                                  books: booksByCategory[category] ?? [],
+                                ),
+                              ),
+                            );
+                          },
+                          child: _CategoryCard(
+                            category,
+                            "${booksByCategory[category]?.length ?? 0}",
+                            Icons.menu_book,
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // Acceso rápido
+                  // 🔹 Acceso rápido
                   const Text("Acceso rápido",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
@@ -104,8 +144,8 @@ class HomeContent extends StatelessWidget {
                       Expanded(
                         child: GestureDetector(
                           onTap: () {
-                            // Ir a la pestaña Reservas (index 2 en BottomNavigation)
-                            final homeVM = Provider.of<HomeViewModel>(context, listen: false);
+                            final homeVM = Provider.of<HomeViewModel>(context,
+                                listen: false);
                             homeVM.onTabTapped(2);
                           },
                           child: const _QuickAccessCard(
@@ -134,37 +174,46 @@ class HomeContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-
-                  // Destacados
+                  // 🔹 Destacados
                   _SectionHeader(title: "Destacados"),
                   SizedBox(
                     height: 250,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: const [
-                        _BookCard("Cien años de soledad", "Gabriel García Márquez",
-                            "€18.99", 4.8,
-                            imageUrl:
-                            "https://m.media-amazon.com/images/I/71UybzN9pML.jpg"),
-                        _BookCard("El Principito", "Antoine de Saint-Exupéry",
-                            "€12.5", 4.9,
-                            imageUrl:
-                            "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg"),
+                        _BookCard(
+                          "Cien años de soledad",
+                          "Gabriel García Márquez",
+                          "€18.99",
+                          4.8,
+                          imageUrl:
+                          "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
+                        ),
+                        _BookCard(
+                          "El Principito",
+                          "Antoine de Saint-Exupéry",
+                          "€12.5",
+                          4.9,
+                          imageUrl:
+                          "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // Novedades
+                  // 🔹 Novedades
                   _SectionHeader(title: "Novedades"),
                   ListView(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     children: const [
-                      _ListBookTile("Dune", "Frank Herbert", "€24.9", 4.7, true),
-                      _ListBookTile("El Arte de la Guerra", "Sun Tzu", "€15.99", 4.4, true),
-                      _ListBookTile("La Sombra del Viento", "Carlos Ruiz Zafón",
-                          "€19.95", 4.8, true),
+                      _ListBookTile(
+                          "Dune", "Frank Herbert", "€24.9", 4.7, true),
+                      _ListBookTile("El Arte de la Guerra", "Sun Tzu",
+                          "€15.99", 4.4, true),
+                      _ListBookTile("La Sombra del Viento",
+                          "Carlos Ruiz Zafón", "€19.95", 4.8, true),
                     ],
                   ),
                 ],

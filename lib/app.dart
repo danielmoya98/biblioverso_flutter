@@ -4,6 +4,7 @@ import 'package:biblioverso_flutter/view/screens/onboarding/onboarding_screen.da
 import 'package:biblioverso_flutter/view/screens/profile/profile_screen.dart';
 import 'package:biblioverso_flutter/view/screens/search/search_screen.dart';
 import 'package:biblioverso_flutter/view/screens/reservations/reservations_screen.dart';
+import 'package:biblioverso_flutter/viewmodel/CategoriesViewModel.dart';
 import 'package:biblioverso_flutter/viewmodel/favorites_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/home_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/profile_viewmodel.dart';
@@ -39,8 +40,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ReservationsViewModel()),
         ChangeNotifierProvider(create: (_) => FavoritesViewModel()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
-
-
+        ChangeNotifierProvider(create: (_) => CategoriesViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
