@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../details/book_detail_screen.dart';
+ // 📌 Importa la pantalla de detalle
+
 class CategoryScreen extends StatelessWidget {
   final String categoryName;
   final List<Map<String, dynamic>> books;
@@ -65,7 +68,18 @@ class CategoryScreen extends StatelessWidget {
               itemCount: books.length,
               itemBuilder: (context, index) {
                 final book = books[index];
-                return _BookCard(book: book);
+                return GestureDetector(
+                  onTap: () {
+                    // 📌 Al hacer click → abrir detalle del libro
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BookDetailScreen(book: book),
+                      ),
+                    );
+                  },
+                  child: _BookCard(book: book),
+                );
               },
             ),
           ),
