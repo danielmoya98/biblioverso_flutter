@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'view/screens/splash/splash_screen.dart';
 import 'viewmodel/splash_viewmodel.dart';
 import 'viewmodel/onboarding_viewmodel.dart';
+import 'view/screens/welcome/welcome_screen.dart';
+import 'viewmodel/welcome_viewmodel.dart';
 
 
 class MyApp extends StatelessWidget {
@@ -15,6 +17,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => SplashViewModel()),
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
+        ChangeNotifierProvider(create: (_) => WelcomeViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -26,7 +29,10 @@ class MyApp extends StatelessWidget {
         routes: {
           "/": (context) => const SplashScreen(),
           "/onboarding": (context) => const OnboardingScreen(),
-          "/welcome": (context) => const Placeholder(),
+          "/welcome": (context) => const WelcomeScreen(),
+          "/login": (context) => const Placeholder(),    // lo haremos luego
+          "/register": (context) => const Placeholder(), // lo haremos luego
+
         },
       ),
     );
