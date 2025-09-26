@@ -6,6 +6,10 @@ import 'viewmodel/splash_viewmodel.dart';
 import 'viewmodel/onboarding_viewmodel.dart';
 import 'view/screens/welcome/welcome_screen.dart';
 import 'viewmodel/welcome_viewmodel.dart';
+import 'view/screens/login/login_screen.dart';
+import 'view/screens/register/register_screen.dart';
+import 'viewmodel/login_viewmodel.dart';
+import 'viewmodel/register_viewmodel.dart';
 
 
 class MyApp extends StatelessWidget {
@@ -18,6 +22,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SplashViewModel()),
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => WelcomeViewModel()),
+        ChangeNotifierProvider(create: (_) => LoginViewModel()),
+        ChangeNotifierProvider(create: (_) => RegisterViewModel()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -30,8 +36,9 @@ class MyApp extends StatelessWidget {
           "/": (context) => const SplashScreen(),
           "/onboarding": (context) => const OnboardingScreen(),
           "/welcome": (context) => const WelcomeScreen(),
-          "/login": (context) => const Placeholder(),    // lo haremos luego
-          "/register": (context) => const Placeholder(), // lo haremos luego
+          "/login": (context) => const LoginScreen(),
+          "/register": (context) => const RegisterScreen(),
+          "/home": (context) => const Placeholder(),// lo haremos luego
 
         },
       ),
