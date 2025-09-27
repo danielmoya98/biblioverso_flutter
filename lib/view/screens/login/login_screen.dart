@@ -19,8 +19,8 @@ class LoginScreen extends StatelessWidget {
             children: [
               Lottie.asset(
                 "lib/assets/animations/Login.json",
-                width: 200,
-                height: 200,
+                width: 250,
+                height: 250,
               ),
               const SizedBox(height: 20),
               Text(

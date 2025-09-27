@@ -47,7 +47,6 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               // Botones de acción
               Column(
                 children: [

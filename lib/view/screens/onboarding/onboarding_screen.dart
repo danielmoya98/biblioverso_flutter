@@ -54,7 +54,7 @@ class OnboardingScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Lottie.asset(page["animation"]!,
-                            width: 250, height: 250, fit: BoxFit.contain),
+                            width: 400, height: 400, fit: BoxFit.contain),
                         const SizedBox(height: 30),
                         Text(
                           page["title"]!,
