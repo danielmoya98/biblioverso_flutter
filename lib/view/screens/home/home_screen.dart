@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../viewmodel/home_viewmodel.dart';
 import '../profile/profile_screen.dart';
 import '../reservations/reservations_screen.dart';
-// import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
 import 'widgets/home_content.dart';
 
@@ -15,25 +14,95 @@ class HomeScreen extends StatelessWidget {
     final vm = Provider.of<HomeViewModel>(context);
 
     final pages = [
-      const HomeContent(),
-      const SearchScreen(),
-      const ReservationsScreen(),
-      const ProfileScreen(),
+      const HomeContent(),       // index 0
+      const SearchScreen(),      // index 1
+      const ReservationsScreen(),// index 2
+      const ProfileScreen(),     // index 3
     ];
 
     return Scaffold(
       body: pages[vm.selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: vm.selectedIndex,
-        onTap: vm.onTabTapped,
-        selectedItemColor: Colors.deepPurple,
-        unselectedItemColor: Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Inicio"),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Buscar"),
-          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: "Reservas"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
+      bottomNavigationBar: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          BottomAppBar(
+            shape: const CircularNotchedRectangle(),
+            notchMargin: 10,
+            color: Colors.white,
+            child: Container(
+              height: 65,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(context, vm, Icons.home, "Inicio", 0),
+                  _buildNavItem(context, vm, Icons.search, "Buscar", 1),
+                  const SizedBox(width: 50), // espacio para botón central
+                  _buildNavItem(context, vm, Icons.bookmark, "Reservas", 2),
+                  _buildNavItem(context, vm, Icons.person, "Perfil", 3),
+                ],
+              ),
+            ),
+          ),
+          // Botón central flotante
+          Positioned(
+            top: -25,
+            left: MediaQuery.of(context).size.width / 2 - 30,
+            child: GestureDetector(
+              onTap: () {
+                // Por ahora no hace nada
+              },
+              child: Container(
+                height: 60,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple,
+                  shape: BoxShape.rectangle,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurple.withOpacity(0.4),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.document_scanner_outlined, color: Colors.white, size: 28),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+      BuildContext context, HomeViewModel vm, IconData icon, String label, int index) {
+    final isSelected = vm.selectedIndex == index;
+    return GestureDetector(
+      onTap: () => vm.onTabTapped(index),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: isSelected ? Colors.deepPurple : Colors.grey),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isSelected ? Colors.deepPurple : Colors.grey,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
         ],
       ),
     );
