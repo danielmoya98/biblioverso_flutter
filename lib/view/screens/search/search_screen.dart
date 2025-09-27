@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../viewmodel/home_viewmodel.dart';
 import '../../../viewmodel/search_viewmodel.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -66,7 +67,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      final homeVM = Provider.of<HomeViewModel>(context, listen: false);
+                      homeVM.onTabTapped(0); // ← navega al tab de inicio (index = 0)
+                    },
                   ),
                   Expanded(
                     child: Hero(

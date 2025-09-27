@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../viewmodel/home_viewmodel.dart';
 import '../../category/category_screen.dart';
+import '../../details/book_detail_screen.dart';
+import '../../recomendations/recommendations_screen.dart';
 import '../../search/search_screen.dart';
 
 class HomeContent extends StatelessWidget {
@@ -19,6 +21,11 @@ class HomeContent extends StatelessWidget {
           "rating": 4.8,
           "status": "Disponible",
           "image": "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
+          "description":
+          "Una obra maestra del realismo mágico que narra la historia de la familia Buendía.",
+          "pages": 471,
+          "year": 1967,
+          "publisher": "Editorial Sudamericana",
         }
       ],
       "Ciencia Ficción": [
@@ -29,6 +36,11 @@ class HomeContent extends StatelessWidget {
           "rating": 4.7,
           "status": "Disponible",
           "image": "https://m.media-amazon.com/images/I/91A2W98J+RL.jpg",
+          "description":
+          "Un clásico de la ciencia ficción que explora política, religión y ecología en Arrakis.",
+          "pages": 600,
+          "year": 1965,
+          "publisher": "Chilton Books",
         }
       ],
       "Historia": [],
@@ -71,19 +83,15 @@ class HomeContent extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GestureDetector(
               onTap: () {
-                Navigator.of(context).push(
-                  PageRouteBuilder(
-                    transitionDuration: const Duration(milliseconds: 500),
-                    pageBuilder: (_, __, ___) => const SearchScreen(),
-                  ),
-                );
+                final homeVM = Provider.of<HomeViewModel>(context, listen: false);
+                homeVM.onTabTapped(1); // va al tab de búsqueda
               },
               child: Hero(
                 tag: "searchBarHero",
                 child: Material(
                   color: Colors.transparent,
                   child: TextField(
-                    enabled: false, // evita escribir en el home
+                    enabled: false,
                     decoration: InputDecoration(
                       hintText: "Buscar libros, autores...",
                       prefixIcon: const Icon(Icons.search),
@@ -106,7 +114,7 @@ class HomeContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 Categorías con navegación
+                  // 🔹 Categorías
                   SizedBox(
                     height: 120,
                     child: ListView(
@@ -180,22 +188,46 @@ class HomeContent extends StatelessWidget {
                     height: 250,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      children: const [
-                        _BookCard(
-                          "Cien años de soledad",
-                          "Gabriel García Márquez",
-                          "€18.99",
-                          4.8,
-                          imageUrl:
-                          "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BookDetailScreen(
+                                  book: booksByCategory["Literatura"]![0],
+                                ),
+                              ),
+                            );
+                          },
+                          child: const _BookCard(
+                            "Cien años de soledad",
+                            "Gabriel García Márquez",
+                            "€18.99",
+                            4.8,
+                            imageUrl:
+                            "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
+                          ),
                         ),
-                        _BookCard(
-                          "El Principito",
-                          "Antoine de Saint-Exupéry",
-                          "€12.5",
-                          4.9,
-                          imageUrl:
-                          "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BookDetailScreen(
+                                  book: booksByCategory["Ciencia Ficción"]![0],
+                                ),
+                              ),
+                            );
+                          },
+                          child: const _BookCard(
+                            "El Principito",
+                            "Antoine de Saint-Exupéry",
+                            "€12.5",
+                            4.9,
+                            imageUrl:
+                            "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
+                          ),
                         ),
                       ],
                     ),
@@ -207,14 +239,47 @@ class HomeContent extends StatelessWidget {
                   ListView(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    children: const [
-                      _ListBookTile(
-                          "Dune", "Frank Herbert", "€24.9", 4.7, true),
-                      _ListBookTile("El Arte de la Guerra", "Sun Tzu",
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BookDetailScreen(
+                                book: booksByCategory["Ciencia Ficción"]![0],
+                              ),
+                            ),
+                          );
+                        },
+                        child: const _ListBookTile(
+                          "Dune",
+                          "Frank Herbert",
+                          "€24.9",
+                          4.7,
+                          true,
+                        ),
+                      ),
+                      const _ListBookTile("El Arte de la Guerra", "Sun Tzu",
                           "€15.99", 4.4, true),
-                      _ListBookTile("La Sombra del Viento",
+                      const _ListBookTile("La Sombra del Viento",
                           "Carlos Ruiz Zafón", "€19.95", 4.8, true),
                     ],
+                  ),
+
+                  _SectionHeader(title: "Recomendado para ti"),
+                  const SizedBox(height: 10),
+                  _RecommendationCard(
+                    title: "Basado en tus favoritos",
+                    subtitle: "Te gustan los libros de Literatura Clásica",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const RecommendationsScreen(),
+                        ),
+                      );
+
+                    },
                   ),
                 ],
               ),
@@ -231,6 +296,7 @@ class HomeContent extends StatelessWidget {
 class _CategoryCard extends StatelessWidget {
   final String title, count;
   final IconData icon;
+
   const _CategoryCard(this.title, this.count, this.icon);
 
   @override
@@ -267,6 +333,66 @@ class _CategoryCard extends StatelessWidget {
     );
   }
 }
+
+class _RecommendationCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final VoidCallback onPressed;
+
+  const _RecommendationCard({
+    required this.title,
+    required this.subtitle,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.teal.shade400, Colors.teal.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: onPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.teal,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            child: const Text("Ver recomendaciones"),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class _QuickAccessCard extends StatelessWidget {
   final String title, subtitle;
@@ -322,7 +448,8 @@ class _BookCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(author, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(author,
+              style: const TextStyle(color: Colors.grey, fontSize: 12)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -386,6 +513,7 @@ class _ListBookTile extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
+
   const _SectionHeader({required this.title});
 
   @override

@@ -8,6 +8,7 @@ import 'package:biblioverso_flutter/viewmodel/CategoriesViewModel.dart';
 import 'package:biblioverso_flutter/viewmodel/favorites_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/home_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/profile_viewmodel.dart';
+import 'package:biblioverso_flutter/viewmodel/recommendations_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/search_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/reservations_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FavoritesViewModel()),
         ChangeNotifierProvider(create: (_) => ProfileViewModel()),
         ChangeNotifierProvider(create: (_) => CategoriesViewModel()),
+        ChangeNotifierProvider(create: (_) => RecommendationsViewModel()),
+
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
