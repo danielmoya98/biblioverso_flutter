@@ -19,8 +19,8 @@ class RegisterScreen extends StatelessWidget {
             children: [
               Lottie.asset(
                 "lib/assets/animations/Register.json",
-                width: 250,
-                height: 250,
+                width: 200,
+                height: 200,
               ),
               const SizedBox(height: 20),
               Text(
@@ -34,7 +34,16 @@ class RegisterScreen extends StatelessWidget {
               TextField(
                 controller: vm.nameController,
                 decoration: const InputDecoration(
-                  labelText: "Nombre completo",
+                  labelText: "Nombres",
+                  prefixIcon: Icon(Icons.person_outline),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: vm.apellidoController,
+                decoration: const InputDecoration(
+                  labelText: "Apellidos",
                   prefixIcon: Icon(Icons.person_outline),
                   border: OutlineInputBorder(),
                 ),

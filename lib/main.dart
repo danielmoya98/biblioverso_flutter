@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'app.dart';
+import 'core/postgres_client.dart';
 
-void main() {
+Future<void> main() async {
+  await NeonDb.connect();
   runApp(const MyApp());
 }
