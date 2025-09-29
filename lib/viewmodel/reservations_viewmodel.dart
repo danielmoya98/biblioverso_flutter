@@ -1,45 +1,60 @@
 import 'package:flutter/material.dart';
+import '../data/services/reservations_service.dart';
 
 class ReservationsViewModel extends ChangeNotifier {
-  int _tabIndex = 0; // 0 = Activas, 1 = Historial
-  int get tabIndex => _tabIndex;
+  final ReservationsService _service = ReservationsService();
 
+  List<Map<String, dynamic>> activeReservations = [];
+  List<Map<String, dynamic>> historyReservations = [];
+
+  bool isLoading = false;
+  String? errorMessage;
+  int tabIndex = 0;
+
+  /// Cambiar de tab
   void setTab(int index) {
-    _tabIndex = index;
+    tabIndex = index;
     notifyListeners();
   }
 
-  // Datos mock
-  final activeReservations = [
-    {
-      "title": "Cien años de soledad",
-      "author": "Gabriel García Márquez",
-      "reserved": "14/1/2024",
-      "expires": "21/1/2024",
-      "branch": "Sucursal Centro",
-      "code": "BV2024-001",
-      "status": "recoger",
-    },
-    {
-      "title": "Sapiens: De animales a dioses",
-      "author": "Yuval Noah Harari",
-      "reserved": "17/1/2024",
-      "expires": "24/1/2024",
-      "branch": "Sucursal Norte",
-      "code": "BV2024-002",
-      "status": "pendiente",
-    },
-  ];
+  /// Cargar reservas del usuario
+  Future<void> fetchReservas(int userId) async {
+    try {
+      isLoading = true;
+      notifyListeners();
 
-  final historyReservations = [
-    {
-      "title": "La Sombra del Viento",
-      "author": "Carlos Ruiz Zafón",
-      "reserved": "9/1/2024",
-      "expires": "16/1/2024",
-      "branch": "Sucursal Sur",
-      "code": "BV2024-003",
-      "collected": "15/1/2024",
-    },
-  ];
+      final data = await _service.getReservas(userId);
+
+      activeReservations = data
+          .where((r) =>
+      r["status"] == "pendiente" ||
+          r["status"] == "recoger") // Activas
+          .toList();
+
+      historyReservations = data
+          .where((r) =>
+      r["status"] == "recogido" || r["status"] == "cancelado") // Historial
+          .toList();
+
+      errorMessage = null;
+    } catch (e) {
+      errorMessage = "Error al cargar reservas: $e";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+
+  /// Cancelar reserva
+  Future<void> cancelReserva(int reservaId) async {
+    try {
+      await _service.cancelarReserva(reservaId);
+      // refrescamos reservas
+    } catch (e) {
+      errorMessage = "Error al cancelar la reserva: $e";
+      notifyListeners();
+    }
+  }
 }

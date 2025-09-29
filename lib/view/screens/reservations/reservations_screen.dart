@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../viewmodel/profile_viewmodel.dart';
 import '../../../viewmodel/reservations_viewmodel.dart';
 
-class ReservationsScreen extends StatelessWidget {
+class ReservationsScreen extends StatefulWidget {
   const ReservationsScreen({super.key});
+
+  @override
+  State<ReservationsScreen> createState() => _ReservationsScreenState();
+}
+
+class _ReservationsScreenState extends State<ReservationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
+    final reservationsVM =
+    Provider.of<ReservationsViewModel>(context, listen: false);
+
+    // 🔹 Cargar reservas al abrir la pantalla
+    reservationsVM.fetchReservas(profileVM.idUsuario!);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,15 +30,13 @@ class ReservationsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Mis Reservas",
             style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.add_circle_outline, size: 28),
-          ),
-        ],
         elevation: 0,
       ),
-      body: Column(
+      body: vm.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : vm.errorMessage != null
+          ? Center(child: Text(vm.errorMessage!))
+          : Column(
         children: [
           // ✅ Tabs Activas / Historial
           Container(
@@ -39,7 +54,8 @@ class ReservationsScreen extends StatelessWidget {
                   onTap: () => vm.setTab(0),
                 ),
                 _TabButton(
-                  text: "Historial (${vm.historyReservations.length})",
+                  text:
+                  "Historial (${vm.historyReservations.length})",
                   selected: vm.tabIndex == 1,
                   onTap: () => vm.setTab(1),
                 ),
@@ -50,7 +66,8 @@ class ReservationsScreen extends StatelessWidget {
           // ✅ Lista de reservas
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 4),
               itemCount: vm.tabIndex == 0
                   ? vm.activeReservations.length
                   : vm.historyReservations.length,
@@ -58,7 +75,11 @@ class ReservationsScreen extends StatelessWidget {
                 final data = vm.tabIndex == 0
                     ? vm.activeReservations[index]
                     : vm.historyReservations[index];
-                return _ReservationCard(data: data, isActive: vm.tabIndex == 0);
+                return _ReservationCard(
+                  data: data,
+                  isActive: vm.tabIndex == 0,
+                  onCancel: () => vm.cancelReserva(data["id"]),
+                );
               },
             ),
           ),
@@ -118,10 +139,12 @@ class _TabButton extends StatelessWidget {
 class _ReservationCard extends StatelessWidget {
   final Map<String, dynamic> data;
   final bool isActive;
+  final VoidCallback onCancel;
 
   const _ReservationCard({
     required this.data,
     required this.isActive,
+    required this.onCancel,
   });
 
   @override
@@ -191,13 +214,16 @@ class _ReservationCard extends StatelessWidget {
 
             // Info
             _InfoRow(icon: Icons.event, text: "Reservado: ${data["reserved"]}"),
-            _InfoRow(
-                icon: Icons.timelapse, text: "Expira: ${data["expires"]}"),
+            _InfoRow(icon: Icons.timelapse, text: "Expira: ${data["expires"]}"),
             _InfoRow(icon: Icons.store, text: data["branch"] ?? ""),
-            _InfoRow(icon: Icons.confirmation_number, text: "Código: ${data["code"]}"),
+            _InfoRow(
+                icon: Icons.confirmation_number,
+                text: "Código: ${data["code"]}"),
 
             if (!isActive && data["collected"] != null)
-              _InfoRow(icon: Icons.check_circle, text: "Recogido: ${data["collected"]}"),
+              _InfoRow(
+                  icon: Icons.check_circle,
+                  text: "Recogido: ${data["collected"]}"),
 
             const SizedBox(height: 12),
 
@@ -205,22 +231,15 @@ class _ReservationCard extends StatelessWidget {
             Row(
               children: [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    // 📌 Aquí luego podemos abrir detalle del libro
+                  },
                   child: const Text("Ver libro"),
                 ),
                 const Spacer(),
                 if (isActive) ...[
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8))),
-                    child: const Text("Marcar como recogido"),
-                  ),
-                  const SizedBox(width: 8),
                   OutlinedButton(
-                    onPressed: () {},
+                    onPressed: onCancel,
                     style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
