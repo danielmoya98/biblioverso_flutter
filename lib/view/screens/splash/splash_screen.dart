@@ -15,7 +15,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     final splashVM = Provider.of<SplashViewModel>(context, listen: false);
-    splashVM.startSplashTimer();
+    splashVM.startSplashTimer(context);
 
     splashVM.addListener(() {
       if (splashVM.isFinished) {

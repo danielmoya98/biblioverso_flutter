@@ -27,18 +27,17 @@ class ProfileScreen extends StatelessWidget {
             decoration: const BoxDecoration(color: Colors.white),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 36,
-                  backgroundImage: NetworkImage(
-                    "https://i.pravatar.cc/150?img=47", // mock avatar
-                  ),
+                  backgroundImage: NetworkImage(vm.foto ??
+                      "https://i.pravatar.cc/150?img=47"),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(vm.name,
+                      Text(vm.nombre ,
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                       Text(vm.email,
@@ -53,7 +52,6 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(height: 25),
 
           // 🔹 Lista de opciones

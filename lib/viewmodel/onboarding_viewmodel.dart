@@ -1,30 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../core/utils/SessionManager.dart';
 
 class OnboardingViewModel extends ChangeNotifier {
   final PageController pageController = PageController();
-  int _currentPage = 0;
-
-  int get currentPage => _currentPage;
+  int currentPage = 0;
 
   void setPage(int index) {
-    _currentPage = index;
+    currentPage = index;
     notifyListeners();
   }
 
   void nextPage() {
-    if (_currentPage < 2) {
-      pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
-    }
+    pageController.nextPage(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
-  void skip(BuildContext context) {
+  Future<void> skip(BuildContext context) async {
+    await SessionManager.setOnboardingSeen();
     Navigator.pushReplacementNamed(context, "/welcome");
   }
 
-  void finish(BuildContext context) {
+  Future<void> finish(BuildContext context) async {
+    await SessionManager.setOnboardingSeen();
     Navigator.pushReplacementNamed(context, "/welcome");
   }
 }

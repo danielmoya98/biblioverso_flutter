@@ -1,22 +1,145 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/CloudinaryService.dart';
 import '../../../viewmodel/profile_viewmodel.dart';
 
-class PersonalInfoScreen extends StatelessWidget {
+class PersonalInfoScreen extends StatefulWidget {
   const PersonalInfoScreen({super.key});
 
   @override
+  State<PersonalInfoScreen> createState() => _PersonalInfoScreenState();
+}
+
+class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
+  final _formKey = GlobalKey<FormState>();
+
+  late TextEditingController usuarioController;
+  late TextEditingController nombreController;
+  late TextEditingController apellidoController;
+  late TextEditingController emailController;
+  late TextEditingController telefonoController;
+  late TextEditingController direccionController;
+  late TextEditingController nacionalidadController;
+  late TextEditingController biografiaController;
+  late TextEditingController fechaNacController; // ✅ inicializado siempre
+
+  String? selectedGenero;
+  DateTime? selectedFechaNac;
+  String? fotoUrl;
+  File? localImageFile;
+
+  final List<String> generos = ["Masculino", "Femenino", "Otro"];
+
+  @override
+  void initState() {
+    super.initState();
+    final vm = Provider.of<ProfileViewModel>(context, listen: false);
+
+    usuarioController = TextEditingController(text: vm.usuario ?? "");
+    nombreController = TextEditingController(text: vm.nombre);
+    apellidoController = TextEditingController(text: vm.apellido);
+    emailController = TextEditingController(text: vm.email);
+    telefonoController = TextEditingController(text: vm.telefono);
+    direccionController = TextEditingController(text: vm.direccion);
+    nacionalidadController = TextEditingController(text: vm.nacionalidad);
+    biografiaController = TextEditingController(text: vm.biografia);
+
+    selectedGenero = generos.contains(vm.genero) ? vm.genero : null;
+    selectedFechaNac = vm.fechaNac;
+
+    fechaNacController = TextEditingController(
+      text: selectedFechaNac != null
+          ? "${selectedFechaNac!.day}/${selectedFechaNac!.month}/${selectedFechaNac!.year}"
+          : "",
+    );
+
+    fotoUrl = vm.foto;
+  }
+
+  @override
+  void dispose() {
+    usuarioController.dispose();
+    nombreController.dispose();
+    apellidoController.dispose();
+    emailController.dispose();
+    telefonoController.dispose();
+    direccionController.dispose();
+    nacionalidadController.dispose();
+    biografiaController.dispose();
+    fechaNacController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        localImageFile = File(pickedFile.path);
+      });
+
+      try {
+        final url = await CloudinaryService.uploadImage(localImageFile!);
+        setState(() {
+          fotoUrl = url;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("✅ Foto subida con éxito")),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("❌ Error al subir foto: $e")),
+        );
+      }
+    }
+  }
+
+  void _pickDate() async {
+    DateTime initial = selectedFechaNac ?? DateTime(2000, 1, 1);
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        selectedFechaNac = picked;
+        fechaNacController.text =
+        "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
+
+  void _saveProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final vm = Provider.of<ProfileViewModel>(context, listen: false);
+
+    await vm.updateProfile(
+      usuario: usuarioController.text,
+      nombre: nombreController.text,
+      apellido: apellidoController.text,
+      email: emailController.text,
+      telefono: telefonoController.text,
+      direccion: direccionController.text,
+      genero: selectedGenero,
+      fechaNac: selectedFechaNac,
+      nacionalidad: nacionalidadController.text,
+      biografia: biografiaController.text,
+      foto: fotoUrl,
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) => const _SavedDialog(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final vm = Provider.of<ProfileViewModel>(context);
-
-    final nameController = TextEditingController(text: vm.name);
-    final emailController = TextEditingController(text: vm.email);
-    final phoneController = TextEditingController(text: vm.phone);
-    final addressController = TextEditingController(text: vm.address);
-
-    DateTime selectedDate = vm.birthDate ?? DateTime(1990, 1, 1);
-    String selectedGenre = vm.favoriteGenre;
-
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -31,24 +154,10 @@ class PersonalInfoScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
-              onPressed: () {
-                vm.updateProfile(
-                  newName: nameController.text,
-                  newEmail: emailController.text,
-                  newPhone: phoneController.text,
-                  newAddress: addressController.text,
-                  newBirthDate: selectedDate,
-                  newFavoriteGenre: selectedGenre,
-                );
-
-                // 🔹 Mostrar el diálogo de confirmación
-                showDialog(
-                  context: context,
-                  builder: (_) => const _SavedDialog(),
-                );
-              },
+              onPressed: _saveProfile,
               child: const Text("Guardar"),
             ),
           )
@@ -56,164 +165,115 @@ class PersonalInfoScreen extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // 📸 Avatar editable
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: NetworkImage(vm.photoUrl ??
-                        "https://i.pravatar.cc/150?img=47"),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.green,
-                      child: IconButton(
-                        icon: const Icon(Icons.camera_alt,
-                            size: 18, color: Colors.white),
-                        onPressed: () {
-                          // Lógica para cambiar foto
-                        },
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              // 📸 Avatar editable
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: localImageFile != null
+                          ? FileImage(localImageFile!)
+                          : (fotoUrl != null
+                          ? NetworkImage(fotoUrl!)
+                          : const NetworkImage(
+                          "https://i.pravatar.cc/150?img=47")) as ImageProvider,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.green,
+                        child: IconButton(
+                          icon: const Icon(Icons.camera_alt,
+                              size: 18, color: Colors.white),
+                          onPressed: _pickImage,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            const Text("Toca para cambiar foto",
-                style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 20),
+              const Text("Toca para cambiar foto",
+                  style: TextStyle(color: Colors.grey)),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Inputs
-            _buildInput("Nombre completo", nameController),
-            const SizedBox(height: 16),
-            _buildInput("Correo electrónico", emailController,
-                inputType: TextInputType.emailAddress),
-            const SizedBox(height: 16),
-            _buildInput("Teléfono", phoneController,
-                inputType: TextInputType.phone),
-            const SizedBox(height: 16),
-            _buildInput("Dirección", addressController),
-            const SizedBox(height: 16),
+              _buildInput("Usuario", usuarioController),
+              const SizedBox(height: 16),
+              _buildInput("Nombre", nombreController),
+              const SizedBox(height: 16),
+              _buildInput("Apellido", apellidoController),
+              const SizedBox(height: 16),
+              _buildInput("Correo electrónico", emailController,
+                  inputType: TextInputType.emailAddress),
+              const SizedBox(height: 16),
+              _buildInput("Teléfono", telefonoController,
+                  inputType: TextInputType.phone),
+              const SizedBox(height: 16),
+              _buildInput("Dirección", direccionController),
+              const SizedBox(height: 16),
+              _buildInput("Nacionalidad", nacionalidadController),
+              const SizedBox(height: 16),
+              _buildInput("Biografía", biografiaController, maxLines: 3),
+              const SizedBox(height: 16),
 
-            // Fecha de nacimiento
-            _DatePickerField(
-              initialDate: selectedDate,
-              onDateSelected: (date) {
-                selectedDate = date;
-              },
-            ),
-            const SizedBox(height: 16),
+              // 📅 Fecha de nacimiento
+              GestureDetector(
+                onTap: _pickDate,
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    controller: fechaNacController,
+                    decoration: const InputDecoration(
+                      labelText: "Fecha de nacimiento",
+                      suffixIcon: Icon(Icons.calendar_today),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
 
-            // Género favorito
-            _GenreDropdown(
-              selectedGenre: selectedGenre,
-              onChanged: (value) {
-                selectedGenre = value ?? selectedGenre;
-              },
-            ),
-          ],
+              // 📚 Género
+              DropdownButtonFormField<String>(
+                value: generos.contains(selectedGenero) ? selectedGenero : null,
+                items: generos
+                    .map((g) => DropdownMenuItem(
+                  value: g,
+                  child: Text(g),
+                ))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    selectedGenero = val;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: "Género",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ---------------- Widgets auxiliares ----------------
   Widget _buildInput(String label, TextEditingController controller,
-      {TextInputType inputType = TextInputType.text}) {
-    return TextField(
+      {TextInputType inputType = TextInputType.text, int maxLines = 1}) {
+    return TextFormField(
       controller: controller,
       keyboardType: inputType,
+      maxLines: maxLines,
+      validator: (val) => val == null || val.isEmpty ? "Campo requerido" : null,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-}
-
-// 📅 Selector de fecha
-class _DatePickerField extends StatefulWidget {
-  final DateTime initialDate;
-  final ValueChanged<DateTime> onDateSelected;
-
-  const _DatePickerField({
-    required this.initialDate,
-    required this.onDateSelected,
-  });
-
-  @override
-  State<_DatePickerField> createState() => _DatePickerFieldState();
-}
-
-class _DatePickerFieldState extends State<_DatePickerField> {
-  late DateTime selectedDate;
-
-  @override
-  void initState() {
-    super.initState();
-    selectedDate = widget.initialDate;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      readOnly: true,
-      controller: TextEditingController(
-        text:
-        "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
-      ),
-      decoration: InputDecoration(
-        labelText: "Fecha de nacimiento",
-        suffixIcon: const Icon(Icons.calendar_today),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onTap: () async {
-        DateTime? picked = await showDatePicker(
-          context: context,
-          initialDate: selectedDate,
-          firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
-        );
-        if (picked != null) {
-          setState(() => selectedDate = picked);
-          widget.onDateSelected(picked);
-        }
-      },
-    );
-  }
-}
-
-// 📚 Dropdown de géneros
-class _GenreDropdown extends StatelessWidget {
-  final String selectedGenre;
-  final ValueChanged<String?> onChanged;
-
-  const _GenreDropdown({
-    required this.selectedGenre,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final genres = ["Ficción", "Historia", "Romance", "Filosofía", "Infantil"];
-
-    return DropdownButtonFormField<String>(
-      value: selectedGenre,
-      items: genres
-          .map((genre) =>
-          DropdownMenuItem(value: genre, child: Text(genre)))
-          .toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: "Género favorito",
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );

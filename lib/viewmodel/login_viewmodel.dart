@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/SessionManager.dart';
 import '../data/services/usuario_service.dart';
 import '../data/models/usuario.dart';
 
@@ -28,9 +29,12 @@ class LoginViewModel extends ChangeNotifier {
 
       if (user != null) {
         _usuarioActual = user;
-        _setLoading(false);
 
-        // ✅ Navegar al Home si el login fue exitoso
+        // ✅ Guardar sesión completa
+        await SessionManager.saveLoginSession(user);
+
+
+        _setLoading(false);
         Navigator.pushReplacementNamed(context, "/home");
       } else {
         _setError("Correo o contraseña incorrectos", context);
@@ -41,8 +45,6 @@ class LoginViewModel extends ChangeNotifier {
       _setLoading(false);
     }
   }
-
-  // ================= MÉTODOS PRIVADOS =================
 
   void _setLoading(bool value) {
     _loading = value;

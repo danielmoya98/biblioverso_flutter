@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../viewmodel/home_viewmodel.dart';
+import '../../../../viewmodel/profile_viewmodel.dart';
 import '../../category/category_screen.dart';
 import '../../details/book_detail_screen.dart';
 import '../../recomendations/recommendations_screen.dart';
@@ -59,24 +60,39 @@ class HomeContent extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text("¡Hola, María!",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
-                    Text("¿Qué vas a leer hoy?",
-                        style: TextStyle(color: Colors.grey)),
-                  ],
+                Consumer<ProfileViewModel>(
+                  builder: (context, profileVM, _) {
+                    final nombre = profileVM.nombre.isNotEmpty
+                        ? profileVM.nombre
+                        : "Usuario"; // fallback si no hay nombre
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("¡Hola, $nombre!",
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        const Text("¿Qué vas a leer hoy?",
+                            style: TextStyle(color: Colors.grey)),
+                      ],
+                    );
+                  },
                 ),
-                const CircleAvatar(
-                  backgroundImage:
-                  NetworkImage("https://i.pravatar.cc/150?img=47"),
-                  radius: 20,
+                Consumer<ProfileViewModel>(
+                  builder: (context, profileVM, _) {
+                    return CircleAvatar(
+                      backgroundImage: NetworkImage(
+                        profileVM.foto ??
+                            "https://i.pravatar.cc/150?img=47", // fallback
+                      ),
+                      radius: 20,
+                    );
+                  },
                 ),
               ],
             ),
           ),
+
 
           // ✅ Barra de búsqueda fija con Hero
           Padding(

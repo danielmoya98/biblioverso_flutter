@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/SessionManager.dart';
 import '../data/services/usuario_service.dart';
 import '../data/models/usuario.dart';
 
@@ -28,6 +29,10 @@ class RegisterViewModel extends ChangeNotifier {
 
       if (user != null) {
         _nuevoUsuario = user;
+
+        // ✅ Guardar sesión al registrarse
+        await SessionManager.saveLoginSession(user);
+
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("✅ Usuario registrado con éxito")),
