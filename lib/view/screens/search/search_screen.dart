@@ -11,56 +11,26 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  bool showFilterPanel = false;
-  String selectedOrder = "Relevancia";
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final vm = Provider.of<SearchViewModel>(context, listen: false);
+      vm.fetchCategories();
+      vm.fetchBooks();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<SearchViewModel>(context);
-
-    final filters = ["Todos", "Literatura Clásica", "Ciencia Ficción", "Historia"];
-
-    final List<Map<String, dynamic>> books = [
-      {
-        "title": "Cien años de soledad",
-        "author": "Gabriel García Márquez",
-        "price": "€18.99",
-        "rating": 4.8,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
-      },
-      {
-        "title": "El Principito",
-        "author": "Antoine de Saint-Exupéry",
-        "price": "€12.5",
-        "rating": 4.9,
-        "status": "Sin stock",
-        "image": "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
-      },
-      {
-        "title": "Sapiens: De animales a dioses",
-        "author": "Yuval Noah Harari",
-        "price": "€21.5",
-        "rating": 4.7,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/713jIoMO3UL.jpg",
-      },
-      {
-        "title": "Dune",
-        "author": "Frank Herbert",
-        "price": "€24.9",
-        "rating": 4.7,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/91A2W98J+RL.jpg",
-      },
-    ];
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // ✅ Barra de búsqueda con Hero
+            // 🔹 Barra de búsqueda
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Row(
@@ -68,8 +38,9 @@ class _SearchScreenState extends State<SearchScreen> {
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () {
-                      final homeVM = Provider.of<HomeViewModel>(context, listen: false);
-                      homeVM.onTabTapped(0); // ← navega al tab de inicio (index = 0)
+                      final homeVM =
+                      Provider.of<HomeViewModel>(context, listen: false);
+                      homeVM.onTabTapped(0);
                     },
                   ),
                   Expanded(
@@ -81,7 +52,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           controller: vm.searchController,
                           autofocus: true,
                           decoration: InputDecoration(
-                            hintText: "Buscar libros, autores...",
+                            hintText: "Buscar libros, editoriales, categorías...",
                             prefixIcon: const Icon(Icons.search),
                             contentPadding:
                             const EdgeInsets.symmetric(vertical: 8),
@@ -97,87 +68,65 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
 
-            // ✅ Filtros principales + botón Filtros
+            // 🔹 Filtros dinámicos por categoría
             SizedBox(
               height: 40,
-              child: ListView(
+              child: vm.categories.isEmpty
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  // Botón de filtros
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        showFilterPanel = !showFilterPanel;
-                      });
-                    },
-                    icon: const Icon(Icons.filter_list),
-                    label: const Text("Filtros"),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                children: vm.categories.map((filter) {
+                  final isSelected = vm.selectedFilter == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(filter),
+                      selected: isSelected,
+                      onSelected: (_) => vm.setFilter(filter),
+                      selectedColor: Colors.deepPurple,
+                      labelStyle: TextStyle(
+                        color:
+                        isSelected ? Colors.white : Colors.black,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-
-                  // Chips de categorías
-                  ...filters.map((filter) {
-                    final isSelected = vm.selectedFilter == filter;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(filter),
-                        selected: isSelected,
-                        onSelected: (_) => vm.setFilter(filter),
-                        selectedColor: Colors.deepPurple,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                        ),
-                      ),
-                    );
-                  }),
-                ],
+                  );
+                }).toList(),
               ),
             ),
 
-            // ✅ Panel de filtros avanzados (ordenar por…)
-            if (showFilterPanel)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: _FilterPanel(
-                  selected: selectedOrder,
-                  onSelected: (value) {
-                    setState(() {
-                      selectedOrder = value;
-                    });
-                  },
-                ),
-              ),
-
             const SizedBox(height: 10),
 
-            // ✅ Resultados
+            // 🔹 Resultados
             Expanded(
-              child: GridView.builder(
+              child: vm.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : vm.errorMessage != null
+                  ? Center(child: Text(vm.errorMessage!))
+                  : vm.results.isEmpty
+                  ? const Center(child: Text("No se encontraron libros"))
+                  : GridView.builder(
                 padding: const EdgeInsets.all(12),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
                   childAspectRatio: 0.65,
                 ),
-                itemCount: books.length,
+                itemCount: vm.results.length,
                 itemBuilder: (context, index) {
-                  final book = books[index];
+                  final book = vm.results[index];
                   return _BookCard(
-                    title: book["title"] as String,
-                    author: book["author"] as String,
-                    price: book["price"] as String,
-                    rating: book["rating"] as double,
-                    status: book["status"] as String,
-                    image: book["image"] as String,
+                    title: book["title"],
+                    author: book["editorial"] ??
+                        "Editorial desconocida",
+                    year: book["year"] ?? "?",
+                    category:
+                    book["category"] ?? "Sin categoría",
+                    status: book["status"],
+                    image: book["image"] ?? "",
+                    disponibles: book["disponibles"],
                   );
                 },
               ),
@@ -189,82 +138,51 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-// ✅ Panel de filtros avanzados
-class _FilterPanel extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onSelected;
-
-  const _FilterPanel({
-    required this.selected,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final options = ["Relevancia", "Título", "Autor", "Precio", "Calificación", "Año"];
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: options.map((option) {
-          final isSelected = option == selected;
-          return ChoiceChip(
-            label: Text(option),
-            selected: isSelected,
-            onSelected: (_) => onSelected(option),
-            selectedColor: Colors.green,
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : Colors.black,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// ✅ Card de libro
+// 🔹 Card de libro
 class _BookCard extends StatelessWidget {
-  final String title, author, price, status, image;
-  final double rating;
+  final String title, author, year, category, status, image;
+  final int disponibles;
 
   const _BookCard({
     required this.title,
     required this.author,
-    required this.price,
+    required this.year,
+    required this.category,
     required this.status,
     required this.image,
-    required this.rating,
+    required this.disponibles,
   });
 
   @override
   Widget build(BuildContext context) {
-    final available = status == "Disponible";
+    final available = disponibles > 0;
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 📸 Imagen
           ClipRRect(
-            borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.network(
               image,
               height: 140,
               width: double.infinity,
               fit: BoxFit.cover,
+              errorBuilder: (context, _, __) => Container(
+                height: 140,
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.book, size: 40, color: Colors.grey),
+              ),
             ),
           ),
+
+          // 📖 Info
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
@@ -280,25 +198,23 @@ class _BookCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style:
                     const TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 6),
-                Text(price,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.green)),
-                Row(
-                  children: [
-                    Icon(Icons.star,
-                        color: Colors.amber.shade700, size: 16),
-                    Text(rating.toString(),
-                        style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
                 const SizedBox(height: 4),
+                Text("Categoría: $category",
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.black54)),
+                Text("Publicado: $year",
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.black54)),
+                const SizedBox(height: 6),
                 Text(
-                  status,
+                  available
+                      ? "Disponibles: $disponibles"
+                      : "Agotado",
                   style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: available ? Colors.green : Colors.red),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: available ? Colors.green : Colors.red,
+                  ),
                 ),
               ],
             ),
