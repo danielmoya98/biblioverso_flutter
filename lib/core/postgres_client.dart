@@ -26,4 +26,14 @@ class NeonDb {
     }
     return await connection.query(sql, substitutionValues: params);
   }
+
+  /// Ejecutar comandos de modificación (INSERT, UPDATE, DELETE)
+  static Future<int> execute(String sql,
+      {Map<String, dynamic>? params}) async {
+    if (connection.isClosed) {
+      await connect();
+    }
+    return await connection.execute(sql, substitutionValues: params);
+  }
+
 }

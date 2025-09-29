@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../viewmodel/favorites_viewmodel.dart';
+import '../../../viewmodel/profile_viewmodel.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -8,37 +11,24 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  bool isGridView = true; // ✅ por defecto grid view
+  bool isGridView = true;
 
-  final List<Map<String, dynamic>> favorites = [
-    {
-      "title": "Cien años de soledad",
-      "author": "Gabriel García Márquez",
-      "price": "€18.99",
-      "rating": 4.8,
-      "status": "Disponible",
-      "image": "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
-    },
-    {
-      "title": "Sapiens: De animales a dioses",
-      "author": "Yuval Noah Harari",
-      "price": "€22.95",
-      "rating": 4.6,
-      "status": "Disponible",
-      "image": "https://m.media-amazon.com/images/I/713jIoMO3UL.jpg",
-    },
-    {
-      "title": "La Sombra del Viento",
-      "author": "Carlos Ruiz Zafón",
-      "price": "€19.95",
-      "rating": 4.8,
-      "status": "Disponible",
-      "image": "https://m.media-amazon.com/images/I/91b0C2YNSrL.jpg",
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
+      Provider.of<FavoritesViewModel>(context, listen: false)
+          .fetchFavoritos(profileVM.idUsuario!);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final vm = Provider.of<FavoritesViewModel>(context);
+    final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
+    final userId = profileVM.idUsuario!;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Mis Favoritos",
@@ -47,13 +37,13 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
       body: Column(
         children: [
-          // 🔹 Barra superior con contador + botones de vista
+          // 🔹 Barra superior
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("${favorites.length} libros guardados",
+                Text("${vm.favoritos.length} libros guardados",
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w500)),
                 ToggleButtons(
@@ -62,9 +52,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   const BoxConstraints(minWidth: 40, minHeight: 36),
                   isSelected: [isGridView, !isGridView],
                   onPressed: (index) {
-                    setState(() {
-                      isGridView = index == 0;
-                    });
+                    setState(() => isGridView = index == 0);
                   },
                   children: const [
                     Icon(Icons.grid_view, size: 20),
@@ -77,19 +65,27 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
           // 🔹 Lista de favoritos
           Expanded(
-            child: isGridView ? _buildGridView() : _buildListView(),
+            child: vm.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : vm.errorMessage != null
+                ? Center(child: Text(vm.errorMessage!))
+                : vm.favoritos.isEmpty
+                ? const Center(child: Text("No tienes favoritos aún"))
+                : isGridView
+                ? _buildGridView(vm.favoritos, vm, userId)
+                : _buildListView(vm.favoritos, vm, userId),
           ),
         ],
       ),
     );
   }
 
-  // ✅ Vista Grid
-  Widget _buildGridView() {
+  Widget _buildGridView(
+      List<Map<String, dynamic>> favorites, FavoritesViewModel vm, int userId) {
     return GridView.builder(
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, // 2 columnas
+        crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
         childAspectRatio: 0.65,
@@ -97,30 +93,31 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       itemCount: favorites.length,
       itemBuilder: (context, index) {
         final book = favorites[index];
-        return _BookCard(book: book);
+        return _BookCard(book: book, vm: vm, userId: userId);
       },
     );
   }
 
-  // ✅ Vista Lista
-  Widget _buildListView() {
+  Widget _buildListView(
+      List<Map<String, dynamic>> favorites, FavoritesViewModel vm, int userId) {
     return ListView.builder(
       padding: const EdgeInsets.all(12),
       itemCount: favorites.length,
       itemBuilder: (context, index) {
         final book = favorites[index];
-        return _BookListTile(book: book);
+        return _BookListTile(book: book, vm: vm, userId: userId);
       },
     );
   }
 }
 
 // ---------------- Widgets internos ----------------
-
 class _BookCard extends StatelessWidget {
   final Map<String, dynamic> book;
+  final FavoritesViewModel vm;
+  final int userId;
 
-  const _BookCard({required this.book});
+  const _BookCard({required this.book, required this.vm, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -128,47 +125,72 @@ class _BookCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              book["image"],
-              height: 140,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+          // 📸 Imagen con ícono de favorito
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(
+                  book["image"] ?? "",
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    vm.removeFavorito(userId, book["idLibro"]);
+                  },
+                  child: const CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.favorite, color: Colors.red, size: 18),
+                  ),
+                ),
+              )
+            ],
           ),
+          // 📖 Info
           Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(book["title"],
+                Text(book["title"] ?? "",
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(book["author"],
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 4),
-                Text(book["price"],
+                Text(book["editorial"] ?? "Editorial desconocida",
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.green)),
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber.shade700, size: 16),
-                    Text(book["rating"].toString(),
-                        style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
+                        fontSize: 12, color: Colors.black54)),
                 const SizedBox(height: 4),
-                Text(book["status"],
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.green)),
+                Text("Publicado: ${book["year"] ?? "?"}",
+                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                const SizedBox(height: 6),
+                Text(book["status"] ?? "",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: (book["status"] == "Disponible")
+                            ? Colors.green
+                            : Colors.red)),
               ],
             ),
           ),
@@ -180,49 +202,57 @@ class _BookCard extends StatelessWidget {
 
 class _BookListTile extends StatelessWidget {
   final Map<String, dynamic> book;
+  final FavoritesViewModel vm;
+  final int userId;
 
-  const _BookListTile({required this.book});
+  const _BookListTile(
+      {required this.book, required this.vm, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            book["image"],
-            width: 50,
-            fit: BoxFit.cover,
-          ),
+          child: Image.network(book["image"] ?? "",
+              width: 50, height: 70, fit: BoxFit.cover),
         ),
-        title: Text(book["title"],
+        title: Text(book["title"] ?? "",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(book["author"], style: const TextStyle(fontSize: 12)),
+            Text(book["editorial"] ?? "Editorial desconocida",
+                style: const TextStyle(fontSize: 12, color: Colors.black54)),
             const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.amber.shade700, size: 16),
-                Text(book["rating"].toString(),
-                    style: const TextStyle(fontSize: 12)),
-              ],
-            ),
+            Text(book["description"] ?? "",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: Colors.black87)),
           ],
         ),
         trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(book["price"],
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.green)),
-            Text(book["status"],
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.green)),
+            GestureDetector(
+              onTap: () {
+                vm.removeFavorito(userId, book["id"]);
+              },
+              child: const Icon(Icons.favorite, color: Colors.red),
+            ),
+            Text(book["status"] ?? "",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: (book["status"] == "Disponible")
+                        ? Colors.green
+                        : Colors.red,
+                    fontSize: 12)),
           ],
         ),
       ),
