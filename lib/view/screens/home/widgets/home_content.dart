@@ -1,55 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../viewmodel/categoria_viewmodel.dart';
 import '../../../../viewmodel/home_viewmodel.dart';
 import '../../../../viewmodel/profile_viewmodel.dart';
 import '../../category/category_screen.dart';
 import '../../details/book_detail_screen.dart';
 import '../../recomendations/recommendations_screen.dart';
-import '../../search/search_screen.dart';
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 🔹 Mock de categorías con libros
-    final Map<String, List<Map<String, dynamic>>> booksByCategory = {
-      "Literatura": [
-        {
-          "title": "Cien años de soledad",
-          "author": "Gabriel García Márquez",
-          "price": "€18.99",
-          "rating": 4.8,
-          "status": "Disponible",
-          "image": "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
-          "description":
-          "Una obra maestra del realismo mágico que narra la historia de la familia Buendía.",
-          "pages": 471,
-          "year": 1967,
-          "publisher": "Editorial Sudamericana",
-        }
-      ],
-      "Ciencia Ficción": [
-        {
-          "title": "Dune",
-          "author": "Frank Herbert",
-          "price": "€24.9",
-          "rating": 4.7,
-          "status": "Disponible",
-          "image": "https://m.media-amazon.com/images/I/91A2W98J+RL.jpg",
-          "description":
-          "Un clásico de la ciencia ficción que explora política, religión y ecología en Arrakis.",
-          "pages": 600,
-          "year": 1965,
-          "publisher": "Chilton Books",
-        }
-      ],
-      "Historia": [],
-      "Infantil": [],
-      "Filosofía": [],
-      "Romance": [],
-    };
+  State<HomeContent> createState() => _HomeContentState();
+}
 
+class _HomeContentState extends State<HomeContent> {
+  @override
+  void initState() {
+    super.initState();
+    // 🔹 Llamamos al ViewModel para cargar categorías al iniciar
+    Future.microtask(() =>
+        Provider.of<CategoriaViewModel>(context, listen: false)
+            .fetchCategorias());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,13 +69,13 @@ class HomeContent extends StatelessWidget {
             ),
           ),
 
-
           // ✅ Barra de búsqueda fija con Hero
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GestureDetector(
               onTap: () {
-                final homeVM = Provider.of<HomeViewModel>(context, listen: false);
+                final homeVM =
+                Provider.of<HomeViewModel>(context, listen: false);
                 homeVM.onTabTapped(1); // va al tab de búsqueda
               },
               child: Hero(
@@ -130,31 +106,53 @@ class HomeContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 Categorías
+                  // 🔹 Categorías desde BD
+                  const Text("Categorías",
+                      style:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const SizedBox(height: 10),
                   SizedBox(
                     height: 120,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: booksByCategory.keys.map((category) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => CategoryScreen(
-                                  categoryName: category,
-                                  books: booksByCategory[category] ?? [],
-                                ),
+                    child: Consumer<CategoriaViewModel>(
+                      builder: (context, vm, _) {
+                        if (vm.isLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (vm.errorMessage != null) {
+                          return Center(child: Text(vm.errorMessage!));
+                        }
+                        if (vm.categorias.isEmpty) {
+                          return const Center(
+                              child: Text("No hay categorías disponibles"));
+                        }
+
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: vm.categorias.length,
+                          itemBuilder: (context, index) {
+                            final categoria = vm.categorias[index];
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => CategoryScreen(
+                                      categoryName: categoria.nombre,
+                                      books: [], // luego cargamos libros
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _CategoryCard(
+                                categoria.nombre,
+                                "${categoria.cantidadLibros} libros", // ✅ cantidad de libros
+                                Icons.menu_book,
                               ),
                             );
                           },
-                          child: _CategoryCard(
-                            category,
-                            "${booksByCategory[category]?.length ?? 0}",
-                            Icons.menu_book,
-                          ),
                         );
-                      }).toList(),
+                      },
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -198,89 +196,41 @@ class HomeContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // 🔹 Destacados
+                  // 🔹 Destacados (mock mientras tanto)
                   _SectionHeader(title: "Destacados"),
                   SizedBox(
                     height: 250,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => BookDetailScreen(
-                                  book: booksByCategory["Literatura"]![0],
-                                ),
-                              ),
-                            );
-                          },
-                          child: const _BookCard(
-                            "Cien años de soledad",
-                            "Gabriel García Márquez",
-                            "€18.99",
-                            4.8,
-                            imageUrl:
-                            "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
-                          ),
+                      children: const [
+                        _BookCard(
+                          "Cien años de soledad",
+                          "Gabriel García Márquez",
+                          "€18.99",
+                          4.8,
+                          imageUrl:
+                          "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => BookDetailScreen(
-                                  book: booksByCategory["Ciencia Ficción"]![0],
-                                ),
-                              ),
-                            );
-                          },
-                          child: const _BookCard(
-                            "El Principito",
-                            "Antoine de Saint-Exupéry",
-                            "€12.5",
-                            4.9,
-                            imageUrl:
-                            "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
-                          ),
+                        _BookCard(
+                          "El Principito",
+                          "Antoine de Saint-Exupéry",
+                          "€12.5",
+                          4.9,
+                          imageUrl:
+                          "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // 🔹 Novedades
+                  // 🔹 Novedades (mock mientras tanto)
                   _SectionHeader(title: "Novedades"),
-                  ListView(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BookDetailScreen(
-                                book: booksByCategory["Ciencia Ficción"]![0],
-                              ),
-                            ),
-                          );
-                        },
-                        child: const _ListBookTile(
-                          "Dune",
-                          "Frank Herbert",
-                          "€24.9",
-                          4.7,
-                          true,
-                        ),
-                      ),
-                      const _ListBookTile("El Arte de la Guerra", "Sun Tzu",
-                          "€15.99", 4.4, true),
-                      const _ListBookTile("La Sombra del Viento",
-                          "Carlos Ruiz Zafón", "€19.95", 4.8, true),
-                    ],
-                  ),
+                  const _ListBookTile("Dune", "Frank Herbert", "€24.9", 4.7, true),
+                  const _ListBookTile(
+                      "El Arte de la Guerra", "Sun Tzu", "€15.99", 4.4, true),
+                  const _ListBookTile("La Sombra del Viento",
+                      "Carlos Ruiz Zafón", "€19.95", 4.8, true),
 
                   _SectionHeader(title: "Recomendado para ti"),
                   const SizedBox(height: 10),
@@ -294,7 +244,6 @@ class HomeContent extends StatelessWidget {
                           builder: (_) => const RecommendationsScreen(),
                         ),
                       );
-
                     },
                   ),
                 ],
@@ -377,18 +326,12 @@ class _RecommendationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, color: Colors.white)),
           const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
-          ),
+          Text(subtitle,
+              style: const TextStyle(color: Colors.white70, fontSize: 13)),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: onPressed,
@@ -408,7 +351,6 @@ class _RecommendationCard extends StatelessWidget {
     );
   }
 }
-
 
 class _QuickAccessCard extends StatelessWidget {
   final String title, subtitle;
