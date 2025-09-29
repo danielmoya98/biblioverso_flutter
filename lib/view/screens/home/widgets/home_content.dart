@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import '../../../../viewmodel/acceso_rapido_viewmodel.dart';
 import '../../../../viewmodel/categoria_viewmodel.dart';
 import '../../../../viewmodel/home_viewmodel.dart';
 import '../../../../viewmodel/profile_viewmodel.dart';
+
 import '../../category/category_screen.dart';
-import '../../details/book_detail_screen.dart';
 import '../../recomendations/recommendations_screen.dart';
+
 
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
@@ -18,10 +21,22 @@ class _HomeContentState extends State<HomeContent> {
   @override
   void initState() {
     super.initState();
-    // 🔹 Llamamos al ViewModel para cargar categorías al iniciar
-    Future.microtask(() =>
-        Provider.of<CategoriaViewModel>(context, listen: false)
-            .fetchCategorias());
+
+    // 🔹 Cargar categorías
+    Future.microtask(() {
+      Provider.of<CategoriaViewModel>(context, listen: false).fetchCategorias();
+
+      // 🔹 Cargar accesos rápidos del usuario logueado
+      final profileVM =
+      Provider.of<ProfileViewModel>(context, listen: false);
+
+      if (profileVM.idUsuario != null) {
+        final accesoVM =
+        Provider.of<AccesoRapidoViewModel>(context, listen: false);
+        accesoVM.fetchAccesos(profileVM.idUsuario!);
+      }
+
+    });
   }
 
   @override
@@ -40,7 +55,7 @@ class _HomeContentState extends State<HomeContent> {
                   builder: (context, profileVM, _) {
                     final nombre = profileVM.nombre.isNotEmpty
                         ? profileVM.nombre
-                        : "Usuario"; // fallback si no hay nombre
+                        : "Usuario"; // fallback
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +84,7 @@ class _HomeContentState extends State<HomeContent> {
             ),
           ),
 
-          // ✅ Barra de búsqueda fija con Hero
+          // ✅ Barra de búsqueda fija
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GestureDetector(
@@ -99,7 +114,7 @@ class _HomeContentState extends State<HomeContent> {
 
           const SizedBox(height: 16),
 
-          // ✅ Contenido scrolleable
+          // ✅ Contenido
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -108,8 +123,8 @@ class _HomeContentState extends State<HomeContent> {
                 children: [
                   // 🔹 Categorías desde BD
                   const Text("Categorías",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 120,
@@ -139,14 +154,14 @@ class _HomeContentState extends State<HomeContent> {
                                   MaterialPageRoute(
                                     builder: (_) => CategoryScreen(
                                       categoryName: categoria.nombre,
-                                      books: [], // luego cargamos libros
+                                      categoryId: categoria.idCategoria,
                                     ),
                                   ),
                                 );
                               },
                               child: _CategoryCard(
                                 categoria.nombre,
-                                "${categoria.cantidadLibros} libros", // ✅ cantidad de libros
+                                "${categoria.cantidadLibros} libros",
                                 Icons.menu_book,
                               ),
                             );
@@ -161,42 +176,57 @@ class _HomeContentState extends State<HomeContent> {
                   const Text("Acceso rápido",
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            final homeVM = Provider.of<HomeViewModel>(context,
-                                listen: false);
-                            homeVM.onTabTapped(2);
-                          },
-                          child: const _QuickAccessCard(
-                            title: "Mis Reservas",
-                            subtitle: "3 activas",
-                            color: Colors.greenAccent,
-                            icon: Icons.bookmark,
+                  Consumer<AccesoRapidoViewModel>(
+                    builder: (context, accesoVM, _) {
+                      if (accesoVM.isLoading) {
+                        return const Center(
+                            child: CircularProgressIndicator());
+                      }
+                      if (accesoVM.errorMessage != null) {
+                        return Center(child: Text(accesoVM.errorMessage!));
+                      }
+
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                final homeVM = Provider.of<HomeViewModel>(
+                                    context,
+                                    listen: false);
+                                homeVM.onTabTapped(2);
+                              },
+                              child: _QuickAccessCard(
+                                title: "Mis Reservas",
+                                subtitle:
+                                "${accesoVM.reservasActivas} activas",
+                                color: Colors.greenAccent,
+                                icon: Icons.bookmark,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, "/favorites");
-                          },
-                          child: const _QuickAccessCard(
-                            title: "Favoritos",
-                            subtitle: "3 libros",
-                            color: Colors.pinkAccent,
-                            icon: Icons.favorite,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, "/favorites");
+                              },
+                              child: _QuickAccessCard(
+                                title: "Favoritos",
+                                subtitle: "${accesoVM.favoritos} libros",
+                                color: Colors.pinkAccent,
+                                icon: Icons.favorite,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ],
+                        ],
+                      );
+                    },
                   ),
+
                   const SizedBox(height: 20),
 
-                  // 🔹 Destacados (mock mientras tanto)
+                  // 🔹 Secciones mock (Destacados, Novedades, Recomendado)
                   _SectionHeader(title: "Destacados"),
                   SizedBox(
                     height: 250,
@@ -224,11 +254,11 @@ class _HomeContentState extends State<HomeContent> {
                   ),
                   const SizedBox(height: 20),
 
-                  // 🔹 Novedades (mock mientras tanto)
                   _SectionHeader(title: "Novedades"),
-                  const _ListBookTile("Dune", "Frank Herbert", "€24.9", 4.7, true),
                   const _ListBookTile(
-                      "El Arte de la Guerra", "Sun Tzu", "€15.99", 4.4, true),
+                      "Dune", "Frank Herbert", "€24.9", 4.7, true),
+                  const _ListBookTile("El Arte de la Guerra", "Sun Tzu",
+                      "€15.99", 4.4, true),
                   const _ListBookTile("La Sombra del Viento",
                       "Carlos Ruiz Zafón", "€19.95", 4.8, true),
 
@@ -299,6 +329,39 @@ class _CategoryCard extends StatelessWidget {
   }
 }
 
+class _QuickAccessCard extends StatelessWidget {
+  final String title, subtitle;
+  final Color color;
+  final IconData icon;
+
+  const _QuickAccessCard({
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(height: 10),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(subtitle, style: const TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+}
+
 class _RecommendationCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -346,39 +409,6 @@ class _RecommendationCard extends StatelessWidget {
             ),
             child: const Text("Ver recomendaciones"),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAccessCard extends StatelessWidget {
-  final String title, subtitle;
-  final Color color;
-  final IconData icon;
-
-  const _QuickAccessCard({
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(subtitle, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );

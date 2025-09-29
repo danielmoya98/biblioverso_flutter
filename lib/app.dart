@@ -5,6 +5,7 @@ import 'package:biblioverso_flutter/view/screens/profile/profile_screen.dart';
 import 'package:biblioverso_flutter/view/screens/search/search_screen.dart';
 import 'package:biblioverso_flutter/view/screens/reservations/reservations_screen.dart';
 import 'package:biblioverso_flutter/viewmodel/CategoriesViewModel.dart';
+import 'package:biblioverso_flutter/viewmodel/acceso_rapido_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/categoria_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/favorites_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/home_viewmodel.dart';
@@ -45,6 +46,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CategoriesViewModel()),
         ChangeNotifierProvider(create: (_) => RecommendationsViewModel()),
         ChangeNotifierProvider(create: (_) => CategoriaViewModel()),
+        ChangeNotifierProvider(create: (_) => AccesoRapidoViewModel()),
+
 
       ],
       child: MaterialApp(
