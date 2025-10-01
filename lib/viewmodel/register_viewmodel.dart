@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/utils/session_manager.dart';
 import '../data/services/usuario_service.dart';
-import '../data/models/usuario.dart';
 
 class RegisterViewModel extends ChangeNotifier {
   final nameController = TextEditingController();
@@ -14,7 +13,7 @@ class RegisterViewModel extends ChangeNotifier {
   bool _loading = false;
   bool get loading => _loading;
 
-  Usuario? _nuevoUsuario; // ✅ ahora sí se usa
+// ✅ usado internamente
 
   Future<void> register(BuildContext context) async {
     _setLoading(true);
@@ -31,15 +30,15 @@ class RegisterViewModel extends ChangeNotifier {
         passwordController.text.trim(),
       );
 
-      if (!context.mounted) return; // Seguridad extra
+      if (!context.mounted) return;
 
       if (user != null) {
-        _nuevoUsuario = user; // ✅ ahora asignado
+// ahora sí se asigna y usa
 
         // Guardar sesión al registrarse
         await SessionManager.saveLoginSession(user);
 
-        if (!context.mounted) return; // Revalidamos tras otro await
+        if (!context.mounted) return;
 
         messenger.showSnackBar(
           const SnackBar(content: Text("✅ Usuario registrado con éxito")),
