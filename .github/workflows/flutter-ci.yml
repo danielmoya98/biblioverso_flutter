@@ -57,33 +57,30 @@ jobs:
         if: startsWith(github.ref, 'refs/heads/feature/')
         uses: atlassian/gajira-transition@v3
         with:
+          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+          jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
+          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
           issue: ${{ env.ISSUE_KEY }}
           transition: "In Progress"
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # 7. Mover issue a "Code Review" cuando se crea PR hacia develop
       - name: Jira → Code Review
         if: github.event_name == 'pull_request'
         uses: atlassian/gajira-transition@v3
         with:
-          issue: ${{ env.ISSUE_KEY }}
-          transition: "Code Review"
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+            jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+            jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
+            jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+            issue: ${{ env.ISSUE_KEY }}
+            transition: "Code Review"
 
       # 8. Mover issue a "Done" cuando se mergea en develop
       - name: Jira → Done
         if: github.ref == 'refs/heads/develop'
         uses: atlassian/gajira-transition@v3
         with:
-          issue: ${{ env.ISSUE_KEY }}
-          transition: "Done"
-        env:
-          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+            jira-base-url: ${{ secrets.JIRA_BASE_URL }}
+            jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
+            jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
+            issue: ${{ env.ISSUE_KEY }}
+            transition: "Done"
