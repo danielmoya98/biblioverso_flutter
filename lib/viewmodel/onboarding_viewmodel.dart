@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../core/utils/SessionManager.dart';
 
 class OnboardingViewModel extends ChangeNotifier {
@@ -20,12 +18,22 @@ class OnboardingViewModel extends ChangeNotifier {
   }
 
   Future<void> skip(BuildContext context) async {
+    // ✅ Capturamos Navigator antes del await
+    final navigator = Navigator.of(context);
+
     await SessionManager.setOnboardingSeen();
-    Navigator.pushReplacementNamed(context, "/welcome");
+
+    if (!context.mounted) return; // Seguridad extra
+    navigator.pushReplacementNamed("/welcome");
   }
 
   Future<void> finish(BuildContext context) async {
+    // ✅ Capturamos Navigator antes del await
+    final navigator = Navigator.of(context);
+
     await SessionManager.setOnboardingSeen();
-    Navigator.pushReplacementNamed(context, "/welcome");
+
+    if (!context.mounted) return; // Seguridad extra
+    navigator.pushReplacementNamed("/welcome");
   }
 }
