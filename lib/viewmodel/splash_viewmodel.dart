@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../core/utils/SessionManager.dart';
 
 class SplashViewModel extends ChangeNotifier {
@@ -7,17 +6,26 @@ class SplashViewModel extends ChangeNotifier {
   bool get isFinished => _isFinished;
 
   Future<void> startSplashTimer(BuildContext context) async {
+    // Capturamos el Navigator ANTES de cualquier await
+    final navigator = Navigator.of(context);
+
+    // Simulación de espera inicial
     await Future.delayed(const Duration(seconds: 2));
 
+    // Llamadas async
     final seenOnboarding = await SessionManager.hasSeenOnboarding();
     final loggedIn = await SessionManager.isLoggedIn();
 
+    // 🔒 Seguridad adicional: evitar usar navigator si el contexto ya no está montado
+    if (!context.mounted) return;
+
+    // Navegación segura
     if (!seenOnboarding) {
-      Navigator.pushReplacementNamed(context, "/onboarding");
+      navigator.pushReplacementNamed("/onboarding");
     } else if (loggedIn) {
-      Navigator.pushReplacementNamed(context, "/home");
+      navigator.pushReplacementNamed("/home");
     } else {
-      Navigator.pushReplacementNamed(context, "/welcome");
+      navigator.pushReplacementNamed("/welcome");
     }
 
     _isFinished = true;
