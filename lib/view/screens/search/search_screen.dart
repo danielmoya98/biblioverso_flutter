@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodel/home_viewmodel.dart';
+import '../../../viewmodel/libro_viewmodel.dart';
 import '../../../viewmodel/search_viewmodel.dart';
+import '../details/book_detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -127,6 +129,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     status: book["status"],
                     image: book["image"] ?? "",
                     disponibles: book["disponibles"],
+                    idLibro: book["id"] as int, //
                   );
                 },
               ),
@@ -138,10 +141,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 }
 
-// 🔹 Card de libro
 class _BookCard extends StatelessWidget {
   final String title, author, year, category, status, image;
   final int disponibles;
+  final int idLibro; // 👈 añadimos idLibro
 
   const _BookCard({
     required this.title,
@@ -151,75 +154,91 @@ class _BookCard extends StatelessWidget {
     required this.status,
     required this.image,
     required this.disponibles,
+    required this.idLibro, // 👈 obligatorio ahora
   });
 
   @override
   Widget build(BuildContext context) {
     final available = disponibles > 0;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 📸 Imagen
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              image,
-              height: 140,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, _, __) => Container(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => LibroViewModel()..fetchLibroDetalle(idLibro),
+              child: BookDetailScreen(idLibro: idLibro),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          color: Colors.white,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 📸 Imagen
+            ClipRRect(
+              borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.network(
+                image,
                 height: 140,
-                color: Colors.grey.shade200,
-                child: const Icon(Icons.book, size: 40, color: Colors.grey),
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, _, __) => Container(
+                  height: 140,
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.book,
+                      size: 40, color: Colors.grey),
+                ),
               ),
             ),
-          ),
 
-          // 📖 Info
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(author,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style:
-                    const TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 4),
-                Text("Categoría: $category",
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black54)),
-                Text("Publicado: $year",
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.black54)),
-                const SizedBox(height: 6),
-                Text(
-                  available
-                      ? "Disponibles: $disponibles"
-                      : "Agotado",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: available ? Colors.green : Colors.red,
+            // 📖 Info
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(author,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.grey)),
+                  const SizedBox(height: 4),
+                  Text("Categoría: $category",
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.black54)),
+                  Text("Publicado: $year",
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.black54)),
+                  const SizedBox(height: 6),
+                  Text(
+                    available
+                        ? "Disponibles: $disponibles"
+                        : "Agotado",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: available ? Colors.green : Colors.red,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

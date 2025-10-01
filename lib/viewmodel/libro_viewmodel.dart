@@ -11,6 +11,7 @@ class LibroViewModel extends ChangeNotifier {
   List<Libro> libros = [];
   bool isLoading = false;
   String? errorMessage;
+  Libro? libroDetalle;
 
   // 🔹 Orden seleccionado
   LibroOrden _orden = LibroOrden.relevancia;
@@ -68,4 +69,31 @@ class LibroViewModel extends ChangeNotifier {
         break;
     }
   }
+
+  // Cargar detalle de libro
+  Future<void> fetchLibroDetalle(int idLibro) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      libroDetalle = await _service.getLibroDetalle(idLibro);
+      errorMessage = null;
+    } catch (e) {
+      errorMessage = "Error cargando detalle: $e";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Agregar reseña
+  Future<void> agregarOpinion(int libroId, int userId, int rating, String comment) async {
+    await _service.addOpinion(libroId, userId, rating, comment);
+    await fetchLibroDetalle(libroId); // refrescar
+  }
+
+  // Crear reserva
+  Future<void> reservarLibro(int libroId, int userId, int cantidad) async {
+    await _service.addReserva(libroId, userId, cantidad);
+  }
+
 }

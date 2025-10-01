@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../../../../viewmodel/acceso_rapido_viewmodel.dart';
 import '../../../../viewmodel/categoria_viewmodel.dart';
 import '../../../../viewmodel/home_viewmodel.dart';
+import '../../../../viewmodel/libro_viewmodel.dart';
 import '../../../../viewmodel/profile_viewmodel.dart';
 
 import '../../category/category_screen.dart';
+import '../../details/book_detail_screen.dart';
 import '../../recomendations/recommendations_screen.dart';
 
 class HomeContent extends StatefulWidget {
@@ -273,6 +275,7 @@ class _HomeContentState extends State<HomeContent> {
                               "Reservas: ${book["reservas"]}",
                               4.5, // 🔹 mock rating por ahora
                               imageUrl: book["image"] ?? "",
+                              idLibro: book["id"] as int,
                             );
                           },
                         );
@@ -306,6 +309,7 @@ class _HomeContentState extends State<HomeContent> {
                                 book["editorial"] ?? "Editorial desconocida",
                                 book["category"] ?? "No hay cataegoria",
                                 book["year"] ?? "?",
+                                idLibro: book["id"] as int,
                               );
                             }).toList(),
                       );
@@ -476,91 +480,124 @@ class _RecommendationCard extends StatelessWidget {
 class _BookCard extends StatelessWidget {
   final String title, author, price, imageUrl;
   final double rating;
+  final int idLibro; // 👈 Nuevo parámetro
 
   const _BookCard(
-    this.title,
-    this.author,
-    this.price,
-    this.rating, {
-    required this.imageUrl,
-  });
+      this.title,
+      this.author,
+      this.price,
+      this.rating, {
+        required this.imageUrl,
+        required this.idLibro,
+      });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      margin: const EdgeInsets.only(right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(imageUrl, height: 180, width:150 , fit: BoxFit.cover),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => LibroViewModel()..fetchLibroDetalle(idLibro),
+              child: BookDetailScreen(idLibro: idLibro),
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(title, maxLines: 1, // 🔹 máximo 2 líneas
-    overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(
-            author,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+        );
 
-          ),
-
-        ],
+      },
+      child: Container(
+        width: 160,
+        margin: const EdgeInsets.only(right: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(imageUrl,
+                  height: 180, width: 150, fit: BoxFit.cover),
+            ),
+            const SizedBox(height: 10),
+            Text(title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              author,
+              style: const TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _ListBookTile extends StatelessWidget {
-  final String title, author, price;
-  final String rating;
-
+  final String title, author, price, rating;
+  final int idLibro; // 👈 Nuevo parámetro
 
   const _ListBookTile(
-    this.title,
-    this.author,
-    this.price,
-    this.rating,
-  );
+      this.title,
+      this.author,
+      this.price,
+      this.rating, {
+        required this.idLibro,
+      });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-      leading: CircleAvatar(
-        backgroundColor: Colors.deepPurple.shade50,
-        child: const Icon(Icons.menu_book, color: Colors.deepPurple),
-      ),
-      title: Text(title,maxLines: 1, // 🔹 máximo 2 líneas
-          overflow: TextOverflow.ellipsis , style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(author , maxLines: 1, // 🔹 máximo 2 líneas
-          overflow: TextOverflow.ellipsis),
-      trailing: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            price,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) => LibroViewModel()..fetchLibroDetalle(idLibro),
+              child: BookDetailScreen(idLibro: idLibro),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.calendar_month_outlined, color: Colors.blue, size: 16 ),
-              Text(rating.toString()),
+        );
 
-            ],
-          ),
-
-        ],
+      },
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        leading: CircleAvatar(
+          backgroundColor: Colors.deepPurple.shade50,
+          child: const Icon(Icons.menu_book, color: Colors.deepPurple),
+        ),
+        title: Text(title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(author,
+            maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              price,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.calendar_month_outlined,
+                    color: Colors.blue, size: 16),
+                Text(rating.toString()),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
 
 class _SectionHeader extends StatelessWidget {
   final String title;

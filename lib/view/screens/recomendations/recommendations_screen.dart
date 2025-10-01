@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../viewmodel/libro_viewmodel.dart';
 import '../../../viewmodel/recommendations_viewmodel.dart';
 import '../../../viewmodel/profile_viewmodel.dart';
+import '../details/book_detail_screen.dart';
 
 class RecommendationsScreen extends StatelessWidget {
   const RecommendationsScreen({super.key});
@@ -146,48 +148,67 @@ class _BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              book["image"] ?? "",
-              height: 140,
-              width: double.infinity,
-              fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChangeNotifierProvider(
+              create: (_) =>
+              LibroViewModel()..fetchLibroDetalle(book["id"] as int),
+              child: BookDetailScreen(idLibro: book["id"] as int),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(book["title"] ?? "",
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(book["editorial"] ?? "Editorial desconocida",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 6),
-                Text(book["status"] ?? "",
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: (book["status"] == "Disponible" || book["status"] == "Nuevo")
-                            ? Colors.green
-                            : Colors.red,
-                        fontSize: 12)),
-              ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+          color: Colors.white,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(12)),
+              child: Image.network(
+                book["image"] ?? "",
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(book["title"] ?? "",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 14)),
+                  Text(book["editorial"] ?? "Editorial desconocida",
+                      style:
+                      const TextStyle(fontSize: 12, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  Text(book["status"] ?? "",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: (book["status"] == "Disponible" ||
+                              book["status"] == "Nuevo")
+                              ? Colors.green
+                              : Colors.red,
+                          fontSize: 12)),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+

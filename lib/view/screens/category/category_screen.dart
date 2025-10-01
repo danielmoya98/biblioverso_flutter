@@ -103,19 +103,14 @@ class CategoryScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => BookDetailScreen(
-                                book: {
-                                  "title": libro.titulo,
-                                  "author": "Autor pendiente",
-                                  "image": libro.portada ?? "",
-                                  "description": libro.sinopsis ?? "",
-                                  "status": libro.disponibles > 0
-                                      ? "Disponible"
-                                      : "Agotado",
-                                },
+                              builder: (_) => ChangeNotifierProvider(
+                                create: (_) => LibroViewModel()..fetchLibroDetalle(libro.idLibro),
+                                child: BookDetailScreen(idLibro: libro.idLibro),
                               ),
                             ),
                           );
+
+
                         },
                         child: _BookCard(
                           title: libro.titulo,
