@@ -21,11 +21,17 @@ class LoginViewModel extends ChangeNotifier {
   Future<void> login(BuildContext context) async {
     _setLoading(true);
 
+    // ✅ Capturamos antes los objetos que usan context
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     try {
       final user = await _usuarioService.login(
         emailController.text.trim(),
         passwordController.text.trim(),
       );
+
+      if (!context.mounted) return; // Seguridad
 
       if (user != null) {
         _usuarioActual = user;
@@ -33,14 +39,16 @@ class LoginViewModel extends ChangeNotifier {
         // ✅ Guardar sesión completa
         await SessionManager.saveLoginSession(user);
 
+        if (!context.mounted) return;
 
         _setLoading(false);
-        Navigator.pushReplacementNamed(context, "/home");
+        navigator.pushReplacementNamed("/home");
       } else {
-        _setError("Correo o contraseña incorrectos", context);
+        _setError("Correo o contraseña incorrectos", messenger);
       }
     } catch (e) {
-      _setError("Error al conectar con NeonDB: $e", context);
+      if (!context.mounted) return;
+      _setError("Error al conectar con NeonDB: $e", messenger);
     } finally {
       _setLoading(false);
     }
@@ -51,10 +59,10 @@ class LoginViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _setError(String message, BuildContext context) {
+  void _setError(String message, ScaffoldMessengerState messenger) {
     _error = message;
     notifyListeners();
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(content: Text(message)),
     );
   }

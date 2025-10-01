@@ -16,10 +16,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    // ✅ Usar addPostFrameCallback en lugar de microtask para evitar problemas con context
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return; // seguridad extra
       final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
-      Provider.of<FavoritesViewModel>(context, listen: false)
-          .fetchFavoritos(profileVM.idUsuario!);
+      final favVM = Provider.of<FavoritesViewModel>(context, listen: false);
+      if (profileVM.idUsuario != null) {
+        favVM.fetchFavoritos(profileVM.idUsuario!);
+      }
     });
   }
 
@@ -31,8 +35,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mis Favoritos",
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Mis Favoritos",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         elevation: 0,
       ),
       body: Column(
@@ -179,11 +185,12 @@ class _BookCard extends StatelessWidget {
                         fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
                 Text(book["editorial"] ?? "Editorial desconocida",
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.black54)),
+                    style:
+                    const TextStyle(fontSize: 12, color: Colors.black54)),
                 const SizedBox(height: 4),
                 Text("Publicado: ${book["year"] ?? "?"}",
-                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                    style:
+                    const TextStyle(fontSize: 11, color: Colors.grey)),
                 const SizedBox(height: 6),
                 Text(book["status"] ?? "",
                     style: TextStyle(

@@ -9,7 +9,6 @@ import '../../../../viewmodel/profile_viewmodel.dart';
 import '../../category/category_screen.dart';
 import '../../recomendations/recommendations_screen.dart';
 
-
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
 
@@ -22,20 +21,22 @@ class _HomeContentState extends State<HomeContent> {
   void initState() {
     super.initState();
 
-    // 🔹 Cargar categorías
     Future.microtask(() {
+      if (!mounted) return;
+
+      // 🔹 Categorías
       Provider.of<CategoriaViewModel>(context, listen: false).fetchCategorias();
 
-      // 🔹 Cargar accesos rápidos del usuario logueado
-      final profileVM =
-      Provider.of<ProfileViewModel>(context, listen: false);
-
+      // 🔹 Acceso rápido
+      final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
       if (profileVM.idUsuario != null) {
         final accesoVM =
         Provider.of<AccesoRapidoViewModel>(context, listen: false);
         accesoVM.fetchAccesos(profileVM.idUsuario!);
       }
 
+      // 🔹 Novedades
+      Provider.of<HomeViewModel>(context, listen: false).fetchNovedades();
     });
   }
 
@@ -55,8 +56,7 @@ class _HomeContentState extends State<HomeContent> {
                   builder: (context, profileVM, _) {
                     final nombre = profileVM.nombre.isNotEmpty
                         ? profileVM.nombre
-                        : "Usuario"; // fallback
-
+                        : "Usuario";
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -91,7 +91,7 @@ class _HomeContentState extends State<HomeContent> {
               onTap: () {
                 final homeVM =
                 Provider.of<HomeViewModel>(context, listen: false);
-                homeVM.onTabTapped(1); // va al tab de búsqueda
+                homeVM.onTabTapped(1); // ir al tab de búsqueda
               },
               child: Hero(
                 tag: "searchBarHero",
@@ -114,17 +114,17 @@ class _HomeContentState extends State<HomeContent> {
 
           const SizedBox(height: 16),
 
-          // ✅ Contenido
+          // ✅ Contenido dinámico
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🔹 Categorías desde BD
+                  // 🔹 Categorías
                   const Text("Categorías",
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 18)),
+                      style:
+                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 120,
@@ -226,7 +226,7 @@ class _HomeContentState extends State<HomeContent> {
 
                   const SizedBox(height: 20),
 
-                  // 🔹 Secciones mock (Destacados, Novedades, Recomendado)
+                  // 🔹 Destacados (mock)
                   _SectionHeader(title: "Destacados"),
                   SizedBox(
                     height: 250,
@@ -254,14 +254,39 @@ class _HomeContentState extends State<HomeContent> {
                   ),
                   const SizedBox(height: 20),
 
+                  // 🔹 Novedades dinámicas
                   _SectionHeader(title: "Novedades"),
-                  const _ListBookTile(
-                      "Dune", "Frank Herbert", "€24.9", 4.7, true),
-                  const _ListBookTile("El Arte de la Guerra", "Sun Tzu",
-                      "€15.99", 4.4, true),
-                  const _ListBookTile("La Sombra del Viento",
-                      "Carlos Ruiz Zafón", "€19.95", 4.8, true),
+                  Consumer<HomeViewModel>(
+                    builder: (context, vm, _) {
+                      if (vm.isLoading) {
+                        return const Center(
+                            child: CircularProgressIndicator());
+                      }
+                      if (vm.errorMessage != null) {
+                        return Text(vm.errorMessage!,
+                            style: const TextStyle(color: Colors.red));
+                      }
+                      if (vm.novedades.isEmpty) {
+                        return const Text("No hay novedades");
+                      }
 
+                      return Column(
+                        children: vm.novedades.map((book) {
+                          return _ListBookTile(
+                            book["title"] ?? "",
+                            book["editorial"] ?? "Editorial desconocida",
+                            "Publicado: ${book["year"] ?? "?"}",
+                            4.5,
+                            (book["disponibles"] ?? 0) > 0,
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // 🔹 Recomendados
                   _SectionHeader(title: "Recomendado para ti"),
                   const SizedBox(height: 10),
                   _RecommendationCard(
