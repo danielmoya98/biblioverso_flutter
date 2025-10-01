@@ -36,51 +36,48 @@ jobs:
       - name: Run tests
         run: flutter test
 
-      # 🔹 Extraer ISSUE_KEY (ej: BIB-2) desde la rama/PR
-      - name: Extract Jira issue key
-        id: extract
-        run: |
-          echo "ISSUE_KEY=$(echo '${{ github.head_ref || github.ref_name }}' | grep -oE 'BIB-[0-9]+')" >> $GITHUB_ENV
-
-      # 🔹 Crear Jira config.yml (requerido por gajira)
+      # 🔹 Crear Jira config.yml (antes de usar gajira)
       - name: Create Jira config file
         run: |
           mkdir -p /home/runner/jira
           cat <<EOF > /home/runner/jira/config.yml
+          # Add your Jira configuration here
           jira_url: ${{ secrets.JIRA_BASE_URL }}
           jira_user: ${{ secrets.JIRA_USER_EMAIL }}
           jira_token: ${{ secrets.JIRA_API_TOKEN }}
           EOF
-
       # 6. Mover issue a "In Progress" cuando se hace push a feature/**
       - name: Jira → In Progress
         if: startsWith(github.ref, 'refs/heads/feature/')
         uses: atlassian/gajira-transition@v3
         with:
-          jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-          jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
-          jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-          issue: ${{ env.ISSUE_KEY }}
+          issue: ${{ github.head_ref || github.ref_name }}
           transition: "In Progress"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # 7. Mover issue a "Code Review" cuando se crea PR hacia develop
       - name: Jira → Code Review
         if: github.event_name == 'pull_request'
         uses: atlassian/gajira-transition@v3
         with:
-            jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-            jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
-            jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-            issue: ${{ env.ISSUE_KEY }}
-            transition: "Code Review"
+          issue: ${{ github.head_ref }}
+          transition: "Code Review"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
       # 8. Mover issue a "Done" cuando se mergea en develop
       - name: Jira → Done
         if: github.ref == 'refs/heads/develop'
         uses: atlassian/gajira-transition@v3
         with:
-            jira-base-url: ${{ secrets.JIRA_BASE_URL }}
-            jira-user-email: ${{ secrets.JIRA_USER_EMAIL }}
-            jira-api-token: ${{ secrets.JIRA_API_TOKEN }}
-            issue: ${{ env.ISSUE_KEY }}
-            transition: "Done"
+          issue: ${{ github.ref_name }}
+          transition: "Done"
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
