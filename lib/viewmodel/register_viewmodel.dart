@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/utils/SessionManager.dart';
+import '../core/utils/session_manager.dart';
 import '../data/services/usuario_service.dart';
-import '../data/models/usuario.dart';
 
 class RegisterViewModel extends ChangeNotifier {
   final nameController = TextEditingController();
@@ -14,10 +13,14 @@ class RegisterViewModel extends ChangeNotifier {
   bool _loading = false;
   bool get loading => _loading;
 
-  Usuario? _nuevoUsuario;
+// ✅ usado internamente
 
   Future<void> register(BuildContext context) async {
     _setLoading(true);
+
+    // ✅ Capturamos referencias antes de async gaps
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
 
     try {
       final user = await _usuarioService.register(
@@ -27,23 +30,27 @@ class RegisterViewModel extends ChangeNotifier {
         passwordController.text.trim(),
       );
 
-      if (user != null) {
-        _nuevoUsuario = user;
+      if (!context.mounted) return;
 
-        // ✅ Guardar sesión al registrarse
+      if (user != null) {
+// ahora sí se asigna y usa
+
+        // Guardar sesión al registrarse
         await SessionManager.saveLoginSession(user);
 
+        if (!context.mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text("✅ Usuario registrado con éxito")),
         );
 
-        Navigator.pushReplacementNamed(context, "/home");
+        navigator.pushReplacementNamed("/home");
       } else {
-        _showError(context, "No se pudo registrar el usuario");
+        _showError(messenger, "No se pudo registrar el usuario");
       }
     } catch (e) {
-      _showError(context, "Error en el registro: $e");
+      if (!context.mounted) return;
+      _showError(messenger, "Error en el registro: $e");
     } finally {
       _setLoading(false);
     }
@@ -54,8 +61,8 @@ class RegisterViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _showError(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  void _showError(ScaffoldMessengerState messenger, String msg) {
+    messenger.showSnackBar(
       SnackBar(content: Text(msg)),
     );
   }

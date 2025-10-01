@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../core/utils/SessionManager.dart';
+import '../core/utils/session_manager.dart';
 import '../data/services/usuario_service.dart';
 import '../data/models/usuario.dart';
+
 class ProfileViewModel extends ChangeNotifier {
   String memberSince = "marzo de 2023";
   final UsuarioService _usuarioService = UsuarioService();
@@ -128,10 +129,14 @@ class ProfileViewModel extends ChangeNotifier {
     debugPrint("✅ Perfil actualizado en BD y sesión: $_nombre $_apellido");
   }
 
-
   /// Logout
   Future<void> logout(BuildContext context) async {
+    // ✅ Capturamos el Navigator ANTES del await
+    final navigator = Navigator.of(context);
+
     await SessionManager.clearSession();
-    Navigator.pushNamedAndRemoveUntil(context, "/welcome", (_) => false);
+
+    if (!context.mounted) return; // Seguridad extra
+    navigator.pushNamedAndRemoveUntil("/welcome", (_) => false);
   }
 }

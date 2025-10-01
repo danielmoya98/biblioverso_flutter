@@ -112,41 +112,6 @@ class ProfileScreen extends StatelessWidget {
 
 // ---------------- Widgets internos ----------------
 
-class _StatCard extends StatelessWidget {
-  final String value;
-  final String label;
-  final Color color;
-
-  const _StatCard(
-      {required this.value, required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.symmetric(horizontal: 6),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
-            Text(value,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 12, color: Colors.black54)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _ProfileOption extends StatelessWidget {
   final IconData icon;
   final String title;

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../core/utils/CloudinaryService.dart';
+import '../../../core/utils/cloudinary_service.dart';
 import '../../../viewmodel/profile_viewmodel.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   late TextEditingController direccionController;
   late TextEditingController nacionalidadController;
   late TextEditingController biografiaController;
-  late TextEditingController fechaNacController; // ✅ inicializado siempre
+  late TextEditingController fechaNacController;
 
   String? selectedGenero;
   DateTime? selectedFechaNac;
@@ -73,6 +73,8 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
   }
 
   Future<void> _pickImage() async {
+    final messenger = ScaffoldMessenger.of(context);
+
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -82,14 +84,18 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
       try {
         final url = await CloudinaryService.uploadImage(localImageFile!);
+        if (!mounted) return;
+
         setState(() {
           fotoUrl = url;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
+
+        messenger.showSnackBar(
           const SnackBar(content: Text("✅ Foto subida con éxito")),
         );
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        if (!mounted) return;
+        messenger.showSnackBar(
           SnackBar(content: Text("❌ Error al subir foto: $e")),
         );
       }
@@ -104,6 +110,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
+    if (!mounted) return;
     if (picked != null) {
       setState(() {
         selectedFechaNac = picked;
@@ -117,6 +124,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final vm = Provider.of<ProfileViewModel>(context, listen: false);
+    final navigator = Navigator.of(context);
 
     await vm.updateProfile(
       usuario: usuarioController.text,
@@ -132,10 +140,12 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
       foto: fotoUrl,
     );
 
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (_) => const _SavedDialog(),
-    );
+    ).then((_) => navigator.pop()); // opcional: cerrar después de guardar
   }
 
   @override
@@ -241,7 +251,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
               // 📚 Género
               DropdownButtonFormField<String>(
-                value: generos.contains(selectedGenero) ? selectedGenero : null,
+                initialValue: generos.contains(selectedGenero) ? selectedGenero : null,
                 items: generos
                     .map((g) => DropdownMenuItem(
                   value: g,

@@ -19,10 +19,12 @@ class AccesoRapidoViewModel extends ChangeNotifier {
 
       errorMessage = null;
 
-      print("✅ Acceso rápido → reservas=$reservasActivas, favoritos=$favoritos");
+      // ✅ Solo debug, no afecta producción
+      debugPrint(
+          "✅ Acceso rápido → reservas=$reservasActivas, favoritos=$favoritos");
     } catch (e) {
       errorMessage = "Error al cargar accesos rápidos: $e";
-      print("❌ Error en fetchAccesos: $e");
+      debugPrint("❌ Error en fetchAccesos: $e");
     } finally {
       isLoading = false;
       notifyListeners();

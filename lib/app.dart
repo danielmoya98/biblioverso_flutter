@@ -4,7 +4,7 @@ import 'package:biblioverso_flutter/view/screens/onboarding/onboarding_screen.da
 import 'package:biblioverso_flutter/view/screens/profile/profile_screen.dart';
 import 'package:biblioverso_flutter/view/screens/search/search_screen.dart';
 import 'package:biblioverso_flutter/view/screens/reservations/reservations_screen.dart';
-import 'package:biblioverso_flutter/viewmodel/CategoriesViewModel.dart';
+import 'package:biblioverso_flutter/viewmodel/categories_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/acceso_rapido_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/categoria_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/favorites_viewmodel.dart';

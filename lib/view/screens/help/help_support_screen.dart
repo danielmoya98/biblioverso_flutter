@@ -1,49 +1,64 @@
 import 'package:flutter/material.dart';
 
-class HelpSupportScreen extends StatelessWidget {
+class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
 
   @override
+  State<HelpSupportScreen> createState() => _HelpSupportScreenState();
+}
+
+class _HelpSupportScreenState extends State<HelpSupportScreen> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final messageController = TextEditingController();
+  String? selectedSubject;
+
+  final subjects = [
+    "Problemas con una reserva",
+    "Sugerencia de libro",
+    "Problemas con mi cuenta",
+    "Otro"
+  ];
+
+  final faqs = [
+    {
+      "q": "¿Cómo puedo reservar un libro?",
+      "a": "Busca el libro, entra a su ficha y pulsa en 'Reservar'."
+    },
+    {
+      "q": "¿Cuánto tiempo tengo para recoger mi reserva?",
+      "a": "Dispones de 48 horas desde que recibes la confirmación."
+    },
+    {
+      "q": "¿Puedo cancelar una reserva?",
+      "a": "Sí, desde 'Mis Reservas' puedes cancelarla en cualquier momento."
+    },
+    {
+      "q": "¿Hay límite en el número de reservas?",
+      "a": "Puedes reservar hasta 5 libros de manera simultánea."
+    },
+    {
+      "q": "¿Cómo funciona la lista de espera?",
+      "a":
+      "Si un libro está agotado, podrás unirte a la lista de espera y se te notificará cuando esté disponible."
+    },
+    {
+      "q": "¿Puedo cambiar la sucursal de recogida?",
+      "a":
+      "Una vez confirmada la reserva, no es posible cambiar la sucursal. Deberás cancelarla y hacer una nueva en la sucursal deseada."
+    },
+  ];
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    messageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final faqs = [
-      {
-        "q": "¿Cómo puedo reservar un libro?",
-        "a": "Busca el libro, entra a su ficha y pulsa en 'Reservar'."
-      },
-      {
-        "q": "¿Cuánto tiempo tengo para recoger mi reserva?",
-        "a": "Dispones de 48 horas desde que recibes la confirmación."
-      },
-      {
-        "q": "¿Puedo cancelar una reserva?",
-        "a": "Sí, desde 'Mis Reservas' puedes cancelarla en cualquier momento."
-      },
-      {
-        "q": "¿Hay límite en el número de reservas?",
-        "a": "Puedes reservar hasta 5 libros de manera simultánea."
-      },
-      {
-        "q": "¿Cómo funciona la lista de espera?",
-        "a": "Si un libro está agotado, podrás unirte a la lista de espera y se te notificará cuando esté disponible."
-      },
-      {
-        "q": "¿Puedo cambiar la sucursal de recogida?",
-        "a": "Una vez confirmada la reserva, no es posible cambiar la sucursal. Deberás cancelarla y hacer una nueva en la sucursal deseada."
-      },
-    ];
-
-    final subjects = [
-      "Problemas con una reserva",
-      "Sugerencia de libro",
-      "Problemas con mi cuenta",
-      "Otro"
-    ];
-
-    final nameController = TextEditingController();
-    final emailController = TextEditingController();
-    final messageController = TextEditingController();
-    String? selectedSubject;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Ayuda y Soporte"),
@@ -112,10 +127,11 @@ class HelpSupportScreen extends StatelessWidget {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             decoration: _inputDecoration("Asunto"),
+            initialValue: selectedSubject,
             items: subjects
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                 .toList(),
-            onChanged: (v) => selectedSubject = v,
+            onChanged: (v) => setState(() => selectedSubject = v),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -199,7 +215,7 @@ class _QuickHelpCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1), // ✅ reemplazo de withOpacity
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -212,7 +228,8 @@ class _QuickHelpCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(title,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                style:
+                const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             Text(subtitle,
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
                 textAlign: TextAlign.center),

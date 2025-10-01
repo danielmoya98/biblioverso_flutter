@@ -24,12 +24,13 @@ class LibroViewModel extends ChangeNotifier {
       libros = await _service.getLibrosByCategoria(idCategoria);
       errorMessage = null;
 
-      print("✅ Libros recibidos (${libros.length})");
+      // Solo debug, no producción
+      debugPrint("✅ Libros recibidos (${libros.length})");
 
       aplicarOrden(); // Orden inicial
     } catch (e) {
       errorMessage = "Error al cargar libros: $e";
-      print("❌ Error en fetchLibrosByCategoria: $e");
+      debugPrint("❌ Error en fetchLibrosByCategoria: $e");
     } finally {
       isLoading = false;
       notifyListeners();
