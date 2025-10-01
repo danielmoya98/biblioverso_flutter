@@ -37,14 +37,15 @@ jobs:
         run: flutter test
 
       # 🔹 Crear Jira config.yml (antes de usar gajira)
-      - name: Create Jira config
+      - name: Create Jira config file
         run: |
-          mkdir -p jira
-          echo "endpoint: ${{ secrets.JIRA_BASE_URL }}" > jira/config.yml
-          echo "user: ${{ secrets.JIRA_USER_EMAIL }}" >> jira/config.yml
-          echo "api_token: ${{ secrets.JIRA_API_TOKEN }}" >> jira/config.yml
-          echo "project: BIB" >> jira/config.yml
-
+          mkdir -p /home/runner/jira
+          cat <<EOF > /home/runner/jira/config.yml
+          # Add your Jira configuration here
+          jira_url: ${{ secrets.JIRA_BASE_URL }}
+          jira_user: ${{ secrets.JIRA_USER_EMAIL }}
+          jira_token: ${{ secrets.JIRA_API_TOKEN }}
+          EOF
       # 6. Mover issue a "In Progress" cuando se hace push a feature/**
       - name: Jira → In Progress
         if: startsWith(github.ref, 'refs/heads/feature/')
