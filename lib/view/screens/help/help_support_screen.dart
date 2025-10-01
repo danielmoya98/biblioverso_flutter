@@ -127,7 +127,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             decoration: _inputDecoration("Asunto"),
-            initialValue: selectedSubject,
+            value: selectedSubject,
             items: subjects
                 .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                 .toList(),

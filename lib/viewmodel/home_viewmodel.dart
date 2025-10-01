@@ -10,6 +10,9 @@ class HomeViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  List<Map<String, dynamic>> destacados = [];
+  bool isLoadingDestacados = false;
+  String? errorMessageDestacados;
 
   void onTabTapped(int index) {
     _selectedIndex = index;
@@ -27,6 +30,22 @@ class HomeViewModel extends ChangeNotifier {
       errorMessage = "Error al cargar novedades: $e";
     } finally {
       isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Obtener destacados
+  Future<void> fetchDestacados() async {
+    try {
+      isLoadingDestacados = true;
+      notifyListeners();
+
+      destacados = await _service.getDestacados();
+      errorMessageDestacados = null;
+    } catch (e) {
+      errorMessageDestacados = "Error al cargar destacados: $e";
+    } finally {
+      isLoadingDestacados = false;
       notifyListeners();
     }
   }

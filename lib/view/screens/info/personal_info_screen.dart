@@ -251,7 +251,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
               // 📚 Género
               DropdownButtonFormField<String>(
-                initialValue: generos.contains(selectedGenero) ? selectedGenero : null,
+                value: generos.contains(selectedGenero) ? selectedGenero : null,
                 items: generos
                     .map((g) => DropdownMenuItem(
                   value: g,

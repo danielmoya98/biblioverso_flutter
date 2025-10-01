@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodel/recommendations_viewmodel.dart';
+import '../../../viewmodel/profile_viewmodel.dart';
 
 class RecommendationsScreen extends StatelessWidget {
   const RecommendationsScreen({super.key});
@@ -8,14 +9,19 @@ class RecommendationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = Provider.of<RecommendationsViewModel>(context);
+    final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
+
+    // 🔹 cargar por defecto la primera vez
+    if (vm.books.isEmpty && !vm.isLoading) {
+      vm.fetchBooks(userId: profileVM.idUsuario);
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Recomendaciones",
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text("Recomendaciones", style: TextStyle(fontWeight: FontWeight.bold)),
             Text("Descubre tu próxima lectura",
                 style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
@@ -41,7 +47,7 @@ class RecommendationsScreen extends StatelessWidget {
                 _TabButton(
                   text: "Para ti",
                   selected: vm.tabIndex == 0,
-                  onTap: () => vm.setTab(0),
+                  onTap: () => vm.setTab(0, userId: profileVM.idUsuario),
                 ),
                 _TabButton(
                   text: "Populares",
@@ -59,7 +65,13 @@ class RecommendationsScreen extends StatelessWidget {
 
           // 🔹 Grid de libros
           Expanded(
-            child: GridView.builder(
+            child: vm.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : vm.errorMessage != null
+                ? Center(child: Text(vm.errorMessage!))
+                : vm.books.isEmpty
+                ? const Center(child: Text("No hay libros para mostrar"))
+                : GridView.builder(
               padding: const EdgeInsets.all(12),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
@@ -138,15 +150,15 @@ class _BookCard extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.shade200),
+        color: Colors.white,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.network(
-              book["image"],
+              book["image"] ?? "",
               height: 140,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -157,36 +169,20 @@ class _BookCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(book["title"],
+                Text(book["title"] ?? "",
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 14)),
-                Text(book["author"],
-                    style:
-                    const TextStyle(fontSize: 12, color: Colors.grey)),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                Text(book["editorial"] ?? "Editorial desconocida",
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 const SizedBox(height: 6),
-                Text(book["price"],
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.green)),
-                Row(
-                  children: [
-                    Icon(Icons.star,
-                        color: Colors.amber.shade700, size: 16),
-                    Text(book["rating"].toString(),
-                        style: const TextStyle(fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  book["status"],
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: book["status"] == "Disponible"
-                          ? Colors.green
-                          : Colors.red),
-                ),
+                Text(book["status"] ?? "",
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: (book["status"] == "Disponible" || book["status"] == "Nuevo")
+                            ? Colors.green
+                            : Colors.red,
+                        fontSize: 12)),
               ],
             ),
           ),

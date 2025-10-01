@@ -1,70 +1,42 @@
 import 'package:flutter/material.dart';
+import '../data/services/recommendations_service.dart';
 
 class RecommendationsViewModel extends ChangeNotifier {
-  int tabIndex = 0;
+  final RecommendationsService _service = RecommendationsService();
 
-  // 🔹 Mock de libros por categoría
-  final Map<int, List<Map<String, dynamic>>> _booksByTab = {
-    0: [
-      {
-        "title": "Cien años de soledad",
-        "author": "Gabriel García Márquez",
-        "price": "€18.99",
-        "rating": 4.8,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
-      },
-      {
-        "title": "El Principito",
-        "author": "Antoine de Saint-Exupéry",
-        "price": "€12.5",
-        "rating": 4.9,
-        "status": "Sin stock",
-        "image": "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
-      },
-      {
-        "title": "Dune",
-        "author": "Frank Herbert",
-        "price": "€24.9",
-        "rating": 4.7,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/91A2W98J+RL.jpg",
-      },
-      {
-        "title": "La Sombra del Viento",
-        "author": "Carlos Ruiz Zafón",
-        "price": "€19.95",
-        "rating": 4.8,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/81l3rZK4lnL.jpg",
-      },
-    ],
-    1: [
-      {
-        "title": "1984",
-        "author": "George Orwell",
-        "price": "€14.95",
-        "rating": 4.6,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/71kxa1-0mfL.jpg",
-      },
-    ],
-    2: [
-      {
-        "title": "El Infinito en un Junco",
-        "author": "Irene Vallejo",
-        "price": "€21.90",
-        "rating": 4.9,
-        "status": "Disponible",
-        "image": "https://m.media-amazon.com/images/I/81yB4QF2FEL.jpg",
-      },
-    ],
-  };
+  int tabIndex = 0; // 0 = Para ti, 1 = Populares, 2 = Novedades
+  List<Map<String, dynamic>> books = [];
+  bool isLoading = false;
+  String? errorMessage;
 
-  List<Map<String, dynamic>> get books => _booksByTab[tabIndex] ?? [];
-
-  void setTab(int index) {
+  /// Cambiar de pestaña y recargar libros
+  Future<void> setTab(int index, {int? userId}) async {
     tabIndex = index;
+    await fetchBooks(userId: userId);
     notifyListeners();
+  }
+
+  /// Cargar libros según pestaña
+  Future<void> fetchBooks({int? userId}) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      if (tabIndex == 0) {
+        if (userId == null) throw Exception("Se requiere userId para 'Para ti'");
+        books = await _service.getForYou(userId);
+      } else if (tabIndex == 1) {
+        books = await _service.getPopular();
+      } else {
+        books = await _service.getRecent();
+      }
+
+      errorMessage = null;
+    } catch (e) {
+      errorMessage = "Error al cargar recomendaciones: $e";
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 }

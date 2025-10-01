@@ -30,13 +30,18 @@ class _HomeContentState extends State<HomeContent> {
       // 🔹 Acceso rápido
       final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
       if (profileVM.idUsuario != null) {
-        final accesoVM =
-        Provider.of<AccesoRapidoViewModel>(context, listen: false);
+        final accesoVM = Provider.of<AccesoRapidoViewModel>(
+          context,
+          listen: false,
+        );
         accesoVM.fetchAccesos(profileVM.idUsuario!);
       }
 
       // 🔹 Novedades
       Provider.of<HomeViewModel>(context, listen: false).fetchNovedades();
+
+      Provider.of<HomeViewModel>(context, listen: false).fetchDestacados();
+
     });
   }
 
@@ -54,17 +59,24 @@ class _HomeContentState extends State<HomeContent> {
               children: [
                 Consumer<ProfileViewModel>(
                   builder: (context, profileVM, _) {
-                    final nombre = profileVM.nombre.isNotEmpty
-                        ? profileVM.nombre
-                        : "Usuario";
+                    final nombre =
+                        profileVM.nombre.isNotEmpty
+                            ? profileVM.nombre
+                            : "Usuario";
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("¡Hola, $nombre!",
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold)),
-                        const Text("¿Qué vas a leer hoy?",
-                            style: TextStyle(color: Colors.grey)),
+                        Text(
+                          "¡Hola, $nombre!",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Text(
+                          "¿Qué vas a leer hoy?",
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ],
                     );
                   },
@@ -89,8 +101,10 @@ class _HomeContentState extends State<HomeContent> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GestureDetector(
               onTap: () {
-                final homeVM =
-                Provider.of<HomeViewModel>(context, listen: false);
+                final homeVM = Provider.of<HomeViewModel>(
+                  context,
+                  listen: false,
+                );
                 homeVM.onTabTapped(1); // ir al tab de búsqueda
               },
               child: Hero(
@@ -122,9 +136,10 @@ class _HomeContentState extends State<HomeContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 🔹 Categorías
-                  const Text("Categorías",
-                      style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Text(
+                    "Categorías",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 120,
@@ -132,14 +147,16 @@ class _HomeContentState extends State<HomeContent> {
                       builder: (context, vm, _) {
                         if (vm.isLoading) {
                           return const Center(
-                              child: CircularProgressIndicator());
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         if (vm.errorMessage != null) {
                           return Center(child: Text(vm.errorMessage!));
                         }
                         if (vm.categorias.isEmpty) {
                           return const Center(
-                              child: Text("No hay categorías disponibles"));
+                            child: Text("No hay categorías disponibles"),
+                          );
                         }
 
                         return ListView.builder(
@@ -152,10 +169,11 @@ class _HomeContentState extends State<HomeContent> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => CategoryScreen(
-                                      categoryName: categoria.nombre,
-                                      categoryId: categoria.idCategoria,
-                                    ),
+                                    builder:
+                                        (_) => CategoryScreen(
+                                          categoryName: categoria.nombre,
+                                          categoryId: categoria.idCategoria,
+                                        ),
                                   ),
                                 );
                               },
@@ -173,14 +191,15 @@ class _HomeContentState extends State<HomeContent> {
                   const SizedBox(height: 20),
 
                   // 🔹 Acceso rápido
-                  const Text("Acceso rápido",
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    "Acceso rápido",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 10),
                   Consumer<AccesoRapidoViewModel>(
                     builder: (context, accesoVM, _) {
                       if (accesoVM.isLoading) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (accesoVM.errorMessage != null) {
                         return Center(child: Text(accesoVM.errorMessage!));
@@ -192,14 +211,14 @@ class _HomeContentState extends State<HomeContent> {
                             child: GestureDetector(
                               onTap: () {
                                 final homeVM = Provider.of<HomeViewModel>(
-                                    context,
-                                    listen: false);
+                                  context,
+                                  listen: false,
+                                );
                                 homeVM.onTabTapped(2);
                               },
                               child: _QuickAccessCard(
                                 title: "Mis Reservas",
-                                subtitle:
-                                "${accesoVM.reservasActivas} activas",
+                                subtitle: "${accesoVM.reservasActivas} activas",
                                 color: Colors.greenAccent,
                                 icon: Icons.bookmark,
                               ),
@@ -226,30 +245,38 @@ class _HomeContentState extends State<HomeContent> {
 
                   const SizedBox(height: 20),
 
-                  // 🔹 Destacados (mock)
+                  // 🔹 Destacados (dinámico desde BD)
                   _SectionHeader(title: "Destacados"),
+                  const SizedBox(height: 10),
                   SizedBox(
                     height: 250,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: const [
-                        _BookCard(
-                          "Cien años de soledad",
-                          "Gabriel García Márquez",
-                          "€18.99",
-                          4.8,
-                          imageUrl:
-                          "https://m.media-amazon.com/images/I/71UybzN9pML.jpg",
-                        ),
-                        _BookCard(
-                          "El Principito",
-                          "Antoine de Saint-Exupéry",
-                          "€12.5",
-                          4.9,
-                          imageUrl:
-                          "https://m.media-amazon.com/images/I/71SmHgZWGPL.jpg",
-                        ),
-                      ],
+                    child: Consumer<HomeViewModel>(
+                      builder: (context, vm, _) {
+                        if (vm.isLoadingDestacados) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (vm.errorMessageDestacados != null) {
+                          return Center(child: Text(vm.errorMessageDestacados!));
+                        }
+                        if (vm.destacados.isEmpty) {
+                          return const Center(child: Text("No hay destacados aún"));
+                        }
+
+                        return ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: vm.destacados.length,
+                          itemBuilder: (context, index) {
+                            final book = vm.destacados[index];
+                            return _BookCard(
+                              book["title"] ?? "",
+                              book["editorial"] ?? "Editorial desconocida",
+                              "Reservas: ${book["reservas"]}",
+                              4.5, // 🔹 mock rating por ahora
+                              imageUrl: book["image"] ?? "",
+                            );
+                          },
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -259,27 +286,28 @@ class _HomeContentState extends State<HomeContent> {
                   Consumer<HomeViewModel>(
                     builder: (context, vm, _) {
                       if (vm.isLoading) {
-                        return const Center(
-                            child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (vm.errorMessage != null) {
-                        return Text(vm.errorMessage!,
-                            style: const TextStyle(color: Colors.red));
+                        return Text(
+                          vm.errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        );
                       }
                       if (vm.novedades.isEmpty) {
                         return const Text("No hay novedades");
                       }
 
                       return Column(
-                        children: vm.novedades.map((book) {
-                          return _ListBookTile(
-                            book["title"] ?? "",
-                            book["editorial"] ?? "Editorial desconocida",
-                            "Publicado: ${book["year"] ?? "?"}",
-                            4.5,
-                            (book["disponibles"] ?? 0) > 0,
-                          );
-                        }).toList(),
+                        children:
+                            vm.novedades.map((book) {
+                              return _ListBookTile(
+                                book["title"] ?? "",
+                                book["editorial"] ?? "Editorial desconocida",
+                                book["category"] ?? "No hay cataegoria",
+                                book["year"] ?? "?",
+                              );
+                            }).toList(),
                       );
                     },
                   ),
@@ -414,12 +442,18 @@ class _RecommendationCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle,
-              style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: onPressed,
@@ -429,8 +463,7 @@ class _RecommendationCard extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
             child: const Text("Ver recomendaciones"),
           ),
@@ -444,8 +477,13 @@ class _BookCard extends StatelessWidget {
   final String title, author, price, imageUrl;
   final double rating;
 
-  const _BookCard(this.title, this.author, this.price, this.rating,
-      {required this.imageUrl});
+  const _BookCard(
+    this.title,
+    this.author,
+    this.price,
+    this.rating, {
+    required this.imageUrl,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -457,26 +495,17 @@ class _BookCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: Image.network(imageUrl, height: 180, fit: BoxFit.cover),
+            child: Image.network(imageUrl, height: 180, width:150 , fit: BoxFit.cover),
           ),
           const SizedBox(height: 10),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(author,
-              style: const TextStyle(color: Colors.grey, fontSize: 12)),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(price,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.green)),
-              Row(
-                children: [
-                  const Icon(Icons.star, color: Colors.amber, size: 16),
-                  Text(rating.toString()),
-                ],
-              ),
-            ],
+          Text(title, maxLines: 1, // 🔹 máximo 2 líneas
+    overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            author,
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+
           ),
+
         ],
       ),
     );
@@ -485,11 +514,15 @@ class _BookCard extends StatelessWidget {
 
 class _ListBookTile extends StatelessWidget {
   final String title, author, price;
-  final double rating;
-  final bool available;
+  final String rating;
+
 
   const _ListBookTile(
-      this.title, this.author, this.price, this.rating, this.available);
+    this.title,
+    this.author,
+    this.price,
+    this.rating,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -499,25 +532,30 @@ class _ListBookTile extends StatelessWidget {
         backgroundColor: Colors.deepPurple.shade50,
         child: const Icon(Icons.menu_book, color: Colors.deepPurple),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(author),
+      title: Text(title,maxLines: 1, // 🔹 máximo 2 líneas
+          overflow: TextOverflow.ellipsis , style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(author , maxLines: 1, // 🔹 máximo 2 líneas
+          overflow: TextOverflow.ellipsis),
       trailing: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(price,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.green)),
+          Text(
+            price,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
+          ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 16),
+              const Icon(Icons.calendar_month_outlined, color: Colors.blue, size: 16 ),
               Text(rating.toString()),
+
             ],
           ),
-          if (available)
-            const Text("Disponible",
-                style: TextStyle(color: Colors.green, fontSize: 12)),
+
         ],
       ),
     );
@@ -534,9 +572,10 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        TextButton(onPressed: () {}, child: const Text("Ver más")),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
