@@ -19,6 +19,10 @@ class RegisterViewModel extends ChangeNotifier {
   Future<void> register(BuildContext context) async {
     _setLoading(true);
 
+    // ✅ Capturamos referencias antes de async gaps
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+
     try {
       final user = await _usuarioService.register(
         nameController.text.trim(),
@@ -27,23 +31,27 @@ class RegisterViewModel extends ChangeNotifier {
         passwordController.text.trim(),
       );
 
+      if (!context.mounted) return; // Seguridad extra
+
       if (user != null) {
         _nuevoUsuario = user;
 
-        // ✅ Guardar sesión al registrarse
+        // Guardar sesión al registrarse
         await SessionManager.saveLoginSession(user);
 
+        if (!context.mounted) return; // Revalidamos tras otro await
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(content: Text("✅ Usuario registrado con éxito")),
         );
 
-        Navigator.pushReplacementNamed(context, "/home");
+        navigator.pushReplacementNamed("/home");
       } else {
-        _showError(context, "No se pudo registrar el usuario");
+        _showError(messenger, "No se pudo registrar el usuario");
       }
     } catch (e) {
-      _showError(context, "Error en el registro: $e");
+      if (!context.mounted) return;
+      _showError(messenger, "Error en el registro: $e");
     } finally {
       _setLoading(false);
     }
@@ -54,8 +62,8 @@ class RegisterViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _showError(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
+  void _showError(ScaffoldMessengerState messenger, String msg) {
+    messenger.showSnackBar(
       SnackBar(content: Text(msg)),
     );
   }
