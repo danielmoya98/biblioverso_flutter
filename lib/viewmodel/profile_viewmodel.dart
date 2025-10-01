@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/utils/SessionManager.dart';
+import '../core/utils/session_manager.dart';
 import '../data/services/usuario_service.dart';
 import '../data/models/usuario.dart';
 

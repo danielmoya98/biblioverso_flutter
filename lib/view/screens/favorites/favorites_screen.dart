@@ -134,7 +134,7 @@ class _BookCard extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),

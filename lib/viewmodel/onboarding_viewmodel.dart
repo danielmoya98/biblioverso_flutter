@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/utils/SessionManager.dart';
+import '../core/utils/session_manager.dart';
 
 class OnboardingViewModel extends ChangeNotifier {
   final PageController pageController = PageController();

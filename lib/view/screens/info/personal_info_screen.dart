@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../core/utils/CloudinaryService.dart';
+import '../../../core/utils/cloudinary_service.dart';
 import '../../../viewmodel/profile_viewmodel.dart';
 
 class PersonalInfoScreen extends StatefulWidget {
@@ -251,7 +251,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
 
               // 📚 Género
               DropdownButtonFormField<String>(
-                value: generos.contains(selectedGenero) ? selectedGenero : null,
+                initialValue: generos.contains(selectedGenero) ? selectedGenero : null,
                 items: generos
                     .map((g) => DropdownMenuItem(
                   value: g,

@@ -1,4 +1,4 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import '../data/models/categoria.dart';
 import '../data/services/categoria_service.dart';
 
@@ -12,19 +12,19 @@ class CategoriaViewModel extends ChangeNotifier {
     try {
       isLoading = true;
       notifyListeners();
-      print("📡 Cargando categorías con conteo...");
+      debugPrint("📡 Cargando categorías con conteo...");
 
       categorias = await _service.getAllCategoriasConConteo();
-      print("🎯 Categorías recibidas en ViewModel: ${categorias.length}");
+      debugPrint("🎯 Categorías recibidas en ViewModel: ${categorias.length}");
 
       errorMessage = null;
     } catch (e) {
       errorMessage = "Error al cargar categorías: $e";
-      print("❌ Error en fetchCategorias: $e");
+      debugPrint("❌ Error en fetchCategorias: $e");
     } finally {
       isLoading = false;
       notifyListeners();
-      print("🔄 Estado actualizado: isLoading=$isLoading");
+      debugPrint("🔄 Estado actualizado: isLoading=$isLoading");
     }
   }
 }

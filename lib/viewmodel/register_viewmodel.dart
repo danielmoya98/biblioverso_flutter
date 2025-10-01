@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/utils/SessionManager.dart';
+import '../core/utils/session_manager.dart';
 import '../data/services/usuario_service.dart';
 import '../data/models/usuario.dart';
 
@@ -14,7 +14,7 @@ class RegisterViewModel extends ChangeNotifier {
   bool _loading = false;
   bool get loading => _loading;
 
-  Usuario? _nuevoUsuario;
+  Usuario? _nuevoUsuario; // ✅ ahora sí se usa
 
   Future<void> register(BuildContext context) async {
     _setLoading(true);
@@ -34,7 +34,7 @@ class RegisterViewModel extends ChangeNotifier {
       if (!context.mounted) return; // Seguridad extra
 
       if (user != null) {
-        _nuevoUsuario = user;
+        _nuevoUsuario = user; // ✅ ahora asignado
 
         // Guardar sesión al registrarse
         await SessionManager.saveLoginSession(user);

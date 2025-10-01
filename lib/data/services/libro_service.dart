@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../core/postgres_client.dart';
 import '../models/libro.dart';
 
@@ -18,7 +19,7 @@ class LibroService {
       ORDER BY l.titulo;
     ''');
 
-    print("📚 Resultado crudo libros: $result");
+    debugPrint("📚 Resultado crudo libros: $result");
 
     return result.map((row) => Libro.fromRow(row)).toList();
   }

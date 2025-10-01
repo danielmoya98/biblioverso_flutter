@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:postgres/postgres.dart';
 
 class NeonDb {
@@ -8,14 +9,14 @@ class NeonDb {
     connection = PostgreSQLConnection(
       "ep-soft-truth-adn780tq-pooler.c-2.us-east-1.aws.neon.tech", // host
       5432,                     // puerto por defecto
-      "neondb",           // nombre de la BD
+      "neondb",                 // nombre de la BD
       username: "neondb_owner",
       password: "npg_8LsPxfKyH5du",
       useSSL: true,             // 🔹 obligatorio en Neon
     );
 
     await connection.open();
-    print("✅ Conectado a NeonDB");
+    debugPrint("✅ Conectado a NeonDB");
   }
 
   /// Ejecutar consultas simples
@@ -35,5 +36,4 @@ class NeonDb {
     }
     return await connection.execute(sql, substitutionValues: params);
   }
-
 }
