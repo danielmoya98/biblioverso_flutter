@@ -55,7 +55,7 @@ class ReservationsService {
   Future<void> unirseListaEspera(int userId, int libroId) async {
     const sql = """
       INSERT INTO reserva (id_usuario, id_libro, estado)
-      VALUES (@userId, @libroId, 'lista_espera')
+      VALUES (@userId, @libroId, 'espera')
       ON CONFLICT DO NOTHING;
     """;
 

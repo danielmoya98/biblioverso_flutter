@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../../../viewmodel/acceso_rapido_viewmodel.dart';
 import '../../../../viewmodel/categoria_viewmodel.dart';
 import '../../../../viewmodel/home_viewmodel.dart';
 import '../../../../viewmodel/libro_viewmodel.dart';
+import '../../../../viewmodel/notificaciones_viewmodel.dart';
 import '../../../../viewmodel/profile_viewmodel.dart';
 
 import '../../category/category_screen.dart';
 import '../../details/book_detail_screen.dart';
+import '../../notifications/notificaciones_screen.dart';
 import '../../recomendations/recommendations_screen.dart';
 
 class HomeContent extends StatefulWidget {
@@ -61,43 +64,68 @@ class _HomeContentState extends State<HomeContent> {
               children: [
                 Consumer<ProfileViewModel>(
                   builder: (context, profileVM, _) {
-                    final nombre =
-                        profileVM.nombre.isNotEmpty
-                            ? profileVM.nombre
-                            : "Usuario";
+                    final nombre = profileVM.nombre.isNotEmpty
+                        ? profileVM.nombre
+                        : "Usuario";
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "¡Hola, $nombre!",
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Text(
-                          "¿Qué vas a leer hoy?",
-                          style: TextStyle(color: Colors.grey),
-                        ),
+                        Text("¡Hola, $nombre!",
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold)),
+                        const Text("¿Qué vas a leer hoy?",
+                            style: TextStyle(color: Colors.grey)),
                       ],
                     );
                   },
                 ),
-                Consumer<ProfileViewModel>(
-                  builder: (context, profileVM, _) {
-                    return CircleAvatar(
-                      backgroundImage: NetworkImage(
-                        profileVM.foto ??
-                            "https://i.pravatar.cc/150?img=47", // fallback
-                      ),
-                      radius: 20,
-                    );
-                  },
+                Row(
+                  children: [
+                    Consumer2<ProfileViewModel, NotificacionesViewModel>(
+                      builder: (context, profileVM, notifVM, _) {
+                        final pendientes = notifVM.notificaciones
+                            .where((n) => n["leida"] == false)
+                            .length;
+
+                        return IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const NotificacionesScreen(),
+                              ),
+                            );
+                          },
+                          icon: Badge(
+                            isLabelVisible: pendientes > 0,
+                            label: Text(
+                              pendientes.toString(),
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 10),
+                            ),
+                            child: const Icon(Icons.notifications),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    Consumer<ProfileViewModel>(
+                      builder: (context, profileVM, _) {
+                        return CircleAvatar(
+                          backgroundImage: NetworkImage(
+                            profileVM.foto ??
+                                "https://i.pravatar.cc/150?img=47",
+                          ),
+                          radius: 20,
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
-          ),
-
+          )
+,
           // ✅ Barra de búsqueda fija
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
