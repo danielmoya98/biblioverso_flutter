@@ -17,24 +17,23 @@ class ReservationsViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Cargar reservas del usuario
   Future<void> fetchReservas(int userId) async {
     try {
       isLoading = true;
       notifyListeners();
 
-      final data = await _service.getReservas(userId);
+      final allReservas = await _service.getReservas(userId);
 
-      activeReservations = data
-          .where((r) =>
-      r["status"] == "pendiente" ||
-          r["status"] == "recoger") // Activas
-          .toList();
+      // Filtrar por estado
+      activeReservations = allReservas.where((r) {
+        final estado = r["estado"].toString().toLowerCase();
+        return estado == "pendiente" || estado == "espera" || estado == "recoger";
+      }).toList();
 
-      historyReservations = data
-          .where((r) =>
-      r["status"] == "recogido" || r["status"] == "cancelado") // Historial
-          .toList();
+      historyReservations = allReservas.where((r) {
+        final estado = r["estado"].toString().toLowerCase();
+        return estado == "cancelado" || estado == "completada";
+      }).toList();
 
       errorMessage = null;
     } catch (e) {
@@ -45,16 +44,27 @@ class ReservationsViewModel extends ChangeNotifier {
     }
   }
 
-
-
   /// Cancelar reserva
   Future<void> cancelReserva(int reservaId) async {
     try {
       await _service.cancelarReserva(reservaId);
-      // refrescamos reservas
+      // refrescar reservas
+      // (necesitamos el userId, puedes pasarlo en el constructor o guardarlo en ProfileVM)
     } catch (e) {
       errorMessage = "Error al cancelar la reserva: $e";
       notifyListeners();
     }
+  }
+
+  /// Reservar un libro
+  Future<void> reservarLibro(int userId, int libroId, int cantidad) async {
+    await _service.reservarLibro(userId, libroId, cantidad);
+    await fetchReservas(userId);
+  }
+
+  /// Unirse a lista de espera
+  Future<void> unirseListaEspera(int userId, int libroId) async {
+    await _service.unirseListaEspera(userId, libroId);
+    await fetchReservas(userId);
   }
 }

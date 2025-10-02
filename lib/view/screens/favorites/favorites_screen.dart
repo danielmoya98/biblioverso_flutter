@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodel/favorites_viewmodel.dart';
 import '../../../viewmodel/profile_viewmodel.dart';
+import '../details/book_detail_screen.dart';
+
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -16,9 +18,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
-    // ✅ Usar addPostFrameCallback en lugar de microtask para evitar problemas con context
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return; // seguridad extra
+      if (!mounted) return;
       final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
       final favVM = Provider.of<FavoritesViewModel>(context, listen: false);
       if (profileVM.idUsuario != null) {
@@ -35,10 +36,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Mis Favoritos",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text("Mis Favoritos",
+            style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
       ),
       body: Column(
@@ -94,12 +93,22 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.65,
+        childAspectRatio: 0.62,
       ),
       itemCount: favorites.length,
       itemBuilder: (context, index) {
         final book = favorites[index];
-        return _BookCard(book: book, vm: vm, userId: userId);
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BookDetailScreen(idLibro: book["idLibro"]),
+              ),
+            );
+          },
+          child: _BookCard(book: book, vm: vm, userId: userId),
+        );
       },
     );
   }
@@ -111,7 +120,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       itemCount: favorites.length,
       itemBuilder: (context, index) {
         final book = favorites[index];
-        return _BookListTile(book: book, vm: vm, userId: userId);
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => BookDetailScreen(idLibro: book["idLibro"]),
+              ),
+            );
+          },
+          child: _BookListTile(book: book, vm: vm, userId: userId),
+        );
       },
     );
   }
@@ -127,14 +146,15 @@ class _BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final disponible = (book["status"] == "Disponible");
+
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(14),
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -148,7 +168,7 @@ class _BookCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(12)),
+                const BorderRadius.vertical(top: Radius.circular(14)),
                 child: Image.network(
                   book["image"] ?? "",
                   height: 160,
@@ -163,10 +183,10 @@ class _BookCard extends StatelessWidget {
                   onTap: () {
                     vm.removeFavorito(userId, book["idLibro"]);
                   },
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 16,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.favorite, color: Colors.red, size: 18),
+                    child: const Icon(Icons.favorite, color: Colors.red, size: 18),
                   ),
                 ),
               )
@@ -185,19 +205,16 @@ class _BookCard extends StatelessWidget {
                         fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
                 Text(book["editorial"] ?? "Editorial desconocida",
-                    style:
-                    const TextStyle(fontSize: 12, color: Colors.black54)),
+                    style: const TextStyle(fontSize: 12, color: Colors.black54)),
                 const SizedBox(height: 4),
                 Text("Publicado: ${book["year"] ?? "?"}",
-                    style:
-                    const TextStyle(fontSize: 11, color: Colors.grey)),
+                    style: const TextStyle(fontSize: 11, color: Colors.grey)),
                 const SizedBox(height: 6),
                 Text(book["status"] ?? "",
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: (book["status"] == "Disponible")
-                            ? Colors.green
-                            : Colors.red)),
+                        fontSize: 13,
+                        color: disponible ? Colors.green : Colors.red)),
               ],
             ),
           ),
@@ -217,6 +234,8 @@ class _BookListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final disponible = (book["status"] == "Disponible");
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -249,16 +268,14 @@ class _BookListTile extends StatelessWidget {
           children: [
             GestureDetector(
               onTap: () {
-                vm.removeFavorito(userId, book["id"]);
+                vm.removeFavorito(userId, book["idLibro"]);
               },
               child: const Icon(Icons.favorite, color: Colors.red),
             ),
             Text(book["status"] ?? "",
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: (book["status"] == "Disponible")
-                        ? Colors.green
-                        : Colors.red,
+                    color: disponible ? Colors.green : Colors.red,
                     fontSize: 12)),
           ],
         ),

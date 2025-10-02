@@ -1,6 +1,10 @@
+import 'package:biblioverso_flutter/viewmodel/reservations_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../viewmodel/libro_viewmodel.dart';
+import '../../../viewmodel/favorites_viewmodel.dart';
+import '../../../viewmodel/opinion_viewmodel.dart';
+import '../../../viewmodel/profile_viewmodel.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final int idLibro;
@@ -12,7 +16,6 @@ class BookDetailScreen extends StatefulWidget {
 }
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
-  bool isFavorite = false;
   int quantity = 1;
 
   @override
@@ -21,27 +24,37 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     Future.microtask(() {
       Provider.of<LibroViewModel>(context, listen: false)
           .fetchLibroDetalle(widget.idLibro);
+
+      // cargar reseñas
+      Provider.of<OpinionViewModel>(context, listen: false)
+          .fetchOpiniones(widget.idLibro);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final vm = Provider.of<LibroViewModel>(context);
+    final libroVM = Provider.of<LibroViewModel>(context);
+    final opinionVM = Provider.of<OpinionViewModel>(context);
+    final favVM = Provider.of<FavoritesViewModel>(context, listen: false);
+    final reservaVM = Provider.of<ReservationsViewModel>(context, listen: false);
+    final profileVM = Provider.of<ProfileViewModel>(context, listen: false);
 
-    if (vm.isLoading) {
+    final userId = profileVM.idUsuario ?? 1; // mock en caso de null
+
+    if (libroVM.isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (vm.errorMessage != null) {
+    if (libroVM.errorMessage != null) {
       return Scaffold(
         appBar: AppBar(title: const Text("Detalles del Libro")),
-        body: Center(child: Text(vm.errorMessage!)),
+        body: Center(child: Text(libroVM.errorMessage!)),
       );
     }
 
-    final book = vm.libroDetalle;
+    final book = libroVM.libroDetalle;
     if (book == null) {
       return const Scaffold(
         body: Center(child: Text("Libro no encontrado")),
@@ -56,16 +69,23 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              setState(() {
-                isFavorite = !isFavorite;
-              });
+          Consumer<FavoritesViewModel>(
+            builder: (context, favVM, _) {
+              final isFav = favVM.favoritos.any((f) => f["idLibro"] == book.idLibro);
+              return IconButton(
+                onPressed: () async {
+                  if (isFav) {
+                    await favVM.removeFavorito(userId, book.idLibro);
+                  } else {
+                    await favVM.addFavorito(userId, book.idLibro);
+                  }
+                },
+                icon: Icon(
+                  isFav ? Icons.favorite : Icons.favorite_border,
+                  color: isFav ? Colors.red : Colors.grey,
+                ),
+              );
             },
-            icon: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? Colors.red : Colors.grey,
-            ),
           ),
         ],
       ),
@@ -120,9 +140,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             const SizedBox(height: 12),
 
             // 🔹 Disponibilidad
-            Text("${book.disponibles} disponibles",
-                style: const TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.w500)),
+            Text(
+              "${book.disponibles} disponibles",
+              style: TextStyle(
+                color: book.disponibles > 0 ? Colors.green : Colors.red,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
 
             const SizedBox(height: 20),
 
@@ -154,29 +178,63 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                     style:
                     TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 TextButton(
-                  onPressed: () => _showReviewDialog(context, vm, book.idLibro),
+                  onPressed: () =>
+                      _showReviewDialog(context, opinionVM, userId, book.idLibro),
                   child: const Text("Escribir reseña"),
                 ),
               ],
             ),
-            if ((book.reviews ?? 0) == 0)
-              const Text("Aún no hay reseñas para este libro"),
+            if (opinionVM.isLoading)
+              const CircularProgressIndicator()
+            else if (opinionVM.opiniones.isEmpty)
+              const Text("Aún no hay reseñas para este libro")
+            else
+              Column(
+                children: opinionVM.opiniones
+                    .map((op) => ListTile(
+                  leading: const Icon(Icons.person),
+                  title: Text(op["usuario"] ?? "Anon"),
+                  subtitle: Text(op["comentario"] ?? ""),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      5,
+                          (i) => Icon(
+                        i < (op["calificacion"] ?? 0)
+                            ? Icons.star
+                            : Icons.star_border,
+                        size: 16,
+                        color: Colors.amber,
+                      ),
+                    ),
+                  ),
+                ))
+                    .toList(),
+              ),
             const SizedBox(height: 80),
           ],
         ),
       ),
 
-      // 🔹 Footer con cantidad + reservar
+      // 🔹 Footer con cantidad + reservar o lista de espera
       bottomNavigationBar: _ReservationFooter(
         quantity: quantity,
+        disponibles: book.disponibles,
         onQuantityChanged: (newQty) {
           setState(() => quantity = newQty);
         },
-        onReserve: () {
-          vm.reservarLibro(book.idLibro, 1, quantity); // userId = 1 mock
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Reserva realizada de ${book.titulo}")),
-          );
+        onReserve: () async {
+          if (book.disponibles > 0) {
+            await reservaVM.reservarLibro(userId, book.idLibro, quantity);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Reserva realizada de ${book.titulo}")),
+            );
+          } else {
+            await reservaVM.unirseListaEspera(userId, book.idLibro);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Te uniste a la lista de espera")),
+            );
+          }
         },
       ),
     );
@@ -184,7 +242,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
   // ---------------------- Diálogo de Reseña ----------------------
   void _showReviewDialog(
-      BuildContext context, LibroViewModel vm, int idLibro) {
+      BuildContext context, OpinionViewModel vm, int userId, int idLibro) {
     final TextEditingController controller = TextEditingController();
     int rating = 0;
 
@@ -234,9 +292,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               child: const Text("Cancelar"),
             ),
             ElevatedButton(
-              onPressed: () {
-                vm.agregarOpinion(idLibro, 1, rating,
-                    controller.text); // userId=1 mock
+              onPressed: () async {
+                await vm.agregarOpinion(
+                    userId, idLibro, rating, controller.text);
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text("Reseña publicada con éxito")));
@@ -297,16 +355,21 @@ class _DetailRow extends StatelessWidget {
 
 class _ReservationFooter extends StatelessWidget {
   final int quantity;
+  final int disponibles;
   final ValueChanged<int> onQuantityChanged;
   final VoidCallback onReserve;
 
-  const _ReservationFooter(
-      {required this.quantity,
-        required this.onQuantityChanged,
-        required this.onReserve});
+  const _ReservationFooter({
+    required this.quantity,
+    required this.disponibles,
+    required this.onQuantityChanged,
+    required this.onReserve,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final hasStock = disponibles > 0;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: const BoxDecoration(color: Colors.white, boxShadow: [
@@ -314,41 +377,43 @@ class _ReservationFooter extends StatelessWidget {
       ]),
       child: Row(
         children: [
-          // Selector cantidad
-          Container(
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(8),
+          // Selector cantidad (solo si hay stock)
+          if (hasStock)
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, size: 18),
+                    onPressed:
+                    quantity > 1 ? () => onQuantityChanged(quantity - 1) : null,
+                  ),
+                  Text(quantity.toString(),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 18),
+                    onPressed: () => onQuantityChanged(quantity + 1),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove, size: 18),
-                  onPressed: quantity > 1
-                      ? () => onQuantityChanged(quantity - 1)
-                      : null,
-                ),
-                Text(quantity.toString(),
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 18),
-                  onPressed: () => onQuantityChanged(quantity + 1),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
+          if (hasStock) const SizedBox(width: 12),
           Expanded(
             child: ElevatedButton(
               onPressed: onReserve,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: hasStock ? Colors.green : Colors.orange,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Reservar",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              child: Text(
+                hasStock ? "Reservar" : "Unirme a lista de espera",
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           )
         ],

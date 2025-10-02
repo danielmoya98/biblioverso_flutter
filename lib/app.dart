@@ -9,6 +9,8 @@ import 'package:biblioverso_flutter/viewmodel/acceso_rapido_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/categoria_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/favorites_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/home_viewmodel.dart';
+import 'package:biblioverso_flutter/viewmodel/libro_viewmodel.dart';
+import 'package:biblioverso_flutter/viewmodel/opinion_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/profile_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/recommendations_viewmodel.dart';
 import 'package:biblioverso_flutter/viewmodel/search_viewmodel.dart';
@@ -47,6 +49,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RecommendationsViewModel()),
         ChangeNotifierProvider(create: (_) => CategoriaViewModel()),
         ChangeNotifierProvider(create: (_) => AccesoRapidoViewModel()),
+        ChangeNotifierProvider(create: (_) => ReservationsViewModel()),
+        ChangeNotifierProvider(create: (_) => FavoritesViewModel()),
+        ChangeNotifierProvider(create: (_) => OpinionViewModel()),
+        ChangeNotifierProvider(create: (_) => LibroViewModel()),
 
 
       ],

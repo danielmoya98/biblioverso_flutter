@@ -78,7 +78,8 @@ class _ReservationsScreenState extends State<ReservationsScreen> {
                 return _ReservationCard(
                   data: data,
                   isActive: vm.tabIndex == 0,
-                  onCancel: () => vm.cancelReserva(data["id"]),
+                  onCancel: () =>
+                      vm.cancelReserva(data["idReserva"]),
                 );
               },
             ),
@@ -114,7 +115,7 @@ class _TabButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(30),
             boxShadow: selected
                 ? [
-              BoxShadow(
+              const BoxShadow(
                 color: Colors.black12,
                 blurRadius: 4,
                 offset: Offset(0, 2),
@@ -149,22 +150,30 @@ class _ReservationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = data["status"]?.toString().toLowerCase();
+    final status = data["estado"]?.toString().toLowerCase();
     Color statusColor;
     String statusText;
 
     switch (status) {
       case "recoger":
         statusColor = Colors.green;
-        statusText = "Recoger";
+        statusText = "Listo para recoger";
         break;
       case "pendiente":
         statusColor = Colors.orange;
         statusText = "Pendiente";
         break;
+      case "espera":
+        statusColor = Colors.blue;
+        statusText = "Lista de espera";
+        break;
+      case "cancelado":
+        statusColor = Colors.red;
+        statusText = "Cancelada";
+        break;
       default:
         statusColor = Colors.grey;
-        statusText = "";
+        statusText = "Finalizado";
     }
 
     return Card(
@@ -182,18 +191,18 @@ class _ReservationCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    data["title"] ?? "",
+                    data["titulo"] ?? "",
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 16),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (isActive && statusText.isNotEmpty)
+                if (statusText.isNotEmpty)
                   Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha:  0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -207,23 +216,29 @@ class _ReservationCard extends StatelessWidget {
               ],
             ),
 
-            Text(data["author"] ?? "",
+            Text(data["autor"] ?? "",
                 style: const TextStyle(color: Colors.grey)),
 
             const SizedBox(height: 8),
 
             // Info
-            _InfoRow(icon: Icons.event, text: "Reservado: ${data["reserved"]}"),
-            _InfoRow(icon: Icons.timelapse, text: "Expira: ${data["expires"]}"),
-            _InfoRow(icon: Icons.store, text: data["branch"] ?? ""),
+            _InfoRow(
+                icon: Icons.event,
+                text: "Reservado: ${data["fechaReserva"] ?? "N/A"}"),
+            if (data["fechaExpiracion"] != null)
+              _InfoRow(
+                  icon: Icons.timelapse,
+                  text: "Expira: ${data["fechaExpiracion"]}"),
+            if (data["sucursal"] != null)
+              _InfoRow(icon: Icons.store, text: data["sucursal"]),
             _InfoRow(
                 icon: Icons.confirmation_number,
-                text: "Código: ${data["code"]}"),
+                text: "Código: ${data["codigo"] ?? "N/A"}"),
 
-            if (!isActive && data["collected"] != null)
+            if (!isActive && data["fechaEntrega"] != null)
               _InfoRow(
                   icon: Icons.check_circle,
-                  text: "Recogido: ${data["collected"]}"),
+                  text: "Entregado: ${data["fechaEntrega"]}"),
 
             const SizedBox(height: 12),
 
@@ -232,12 +247,12 @@ class _ReservationCard extends StatelessWidget {
               children: [
                 TextButton(
                   onPressed: () {
-                    // 📌 Aquí luego podemos abrir detalle del libro
+                    // 📌 Abrir detalle del libro
                   },
                   child: const Text("Ver libro"),
                 ),
                 const Spacer(),
-                if (isActive) ...[
+                if (isActive && status != "lista_espera") ...[
                   OutlinedButton(
                     onPressed: onCancel,
                     style: OutlinedButton.styleFrom(
